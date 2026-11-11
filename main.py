@@ -1,12 +1,19 @@
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import StreamingResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from analyzer import RepoAnalyzer
 from generators import (
     gen_dockerfile, gen_compose, gen_kubernetes,
-    gen_cicd, gen_aws_terraform, gen_monitoring, gen_env_and_nginx
+    gen_cicd, gen_aws_terraform, gen_monitoring, gen_env_and_nginx,
+    generate_all_spec_configurations, generate_terraform_for_spec,
+    generate_kubernetes_for_spec, generate_dockerfile_for_spec,
+    generate_compose_for_spec
+)
+from config_validator import (
+    validate_all_spec_configurations, validate_kubernetes_manifests,
+    validate_terraform_code, validate_dockerfile_syntax
 )
 from exporter import create_export_zip
 from ai_providers import AIProviderFactory
@@ -179,6 +186,60 @@ async def parse_infrastructure_endpoint(data: ParseRequirementRequest):
         raise HTTPException(status_code=500, detail=f"Failed to parse requirements: {str(e)}")
 
 
+@app.post("/api/infrastructure/generate")
+async def generate_infrastructure_endpoint(spec: InfrastructureSpec):
+    """
+    Generate validated Terraform, Kubernetes, Docker, and Compose configs from an InfrastructureSpec.
+    """
+    try:
+        configs = generate_all_spec_configurations(spec)
+        validations = validate_all_spec_configurations(configs)
+        all_valid = all(v.get("valid", False) for v in validations.values())
+        return {
+            "success": all_valid,
+            "spec": spec.model_dump() if hasattr(spec, "model_dump") else spec.dict(),
+            "configs": configs,
+            "validations": validations
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Configuration generation failed: {str(e)}")
+
+
+@app.post("/api/infrastructure/download")
+async def download_infrastructure_configs(spec: InfrastructureSpec):
+    """
+    Generate and stream a zip package of infrastructure files for the given spec.
+    """
+    try:
+        configs = generate_all_spec_configurations(spec)
+        validations = validate_all_spec_configurations(configs)
+        env_str = spec.environment.value if hasattr(spec.environment, "value") else str(spec.environment)
+        db_str = spec.database.value if hasattr(spec.database, "value") else str(spec.database)
+
+        analysis_data = {
+            "repo": f"{env_str}/{spec.service_name}",
+            "branch": env_str,
+            "stack": ["Python", "FastAPI"] + (["PostgreSQL"] if db_str == "postgres" else []),
+            "project_type": "FastAPI",
+            "ai_powered": True,
+            "readiness": {
+                "score": 95,
+                "signals": {"docker": True, "infra": True, "ci": True, "monitoring": True}
+            },
+            "validations": validations
+        }
+        zip_buffer = create_export_zip(analysis_data, configs)
+        filename = f"infraspec-{spec.service_name}-{env_str}.zip"
+        zip_bytes = zip_buffer.getvalue()
+        return Response(
+            content=zip_bytes,
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}")
+
+
 @app.post("/api/provision/request")
 async def provision_request(data: InfrastructureRequest):
     """
@@ -186,6 +247,8 @@ async def provision_request(data: InfrastructureRequest):
     Connects the natural-language request and selections to the generator pipeline.
     """
     try:
+        service_name = data.service_name.strip() if data.service_name else "infra-service"
+
         # Map selections to stack & project type
         stack_items = []
         if data.service_type == "web-api":
@@ -217,18 +280,39 @@ async def provision_request(data: InfrastructureRequest):
         if data.database != "none":
             files.append("database.py")
 
-        # Generate starter configs
+        # Build validated InfrastructureSpec and spec-driven configs
+        try:
+            spec = InfrastructureSpec(
+                service_name=service_name,
+                service_type=data.service_type,
+                environment=data.environment,
+                replica_count=data.replica_count,
+                database=data.database,
+                network_exposure=data.network_exposure,
+                monitoring=data.monitoring,
+                raw_prompt=data.natural_language_request or f"Deploy {service_name} {data.service_type} to {data.environment}",
+                enable_autoscaling=data.replica_count > 1,
+                min_replicas=1,
+                max_replicas=max(5, data.replica_count * 2)
+            )
+            spec_configs = generate_all_spec_configurations(spec)
+            validations = validate_all_spec_configurations(spec_configs)
+        except Exception:
+            spec = None
+            spec_configs = {}
+            validations = {}
+
+        # Merge configs favoring spec_configs when available
         configs = {
-            "dockerfile": gen_dockerfile(stack_items, ptype, files),
-            "compose": gen_compose(stack_items, files),
-            "kubernetes": gen_kubernetes(stack_items, ptype),
-            "cicd": gen_cicd(stack_items, files),
-            "aws_terraform": gen_aws_terraform(stack_items, files),
-            "monitoring": gen_monitoring(stack_items),
-            "env_config": gen_env_and_nginx(stack_items, files),
+            "dockerfile": spec_configs.get("dockerfile") or gen_dockerfile(stack_items, ptype, files),
+            "compose": spec_configs.get("compose") or gen_compose(stack_items, files),
+            "kubernetes": spec_configs.get("kubernetes") or gen_kubernetes(stack_items, ptype),
+            "cicd": spec_configs.get("cicd") or gen_cicd(stack_items, files),
+            "aws_terraform": spec_configs.get("aws_terraform") or gen_aws_terraform(stack_items, files),
+            "monitoring": spec_configs.get("monitoring") or gen_monitoring(stack_items),
+            "env_config": spec_configs.get("env_config") or gen_env_and_nginx(stack_items, files),
         }
 
-        service_name = data.service_name.strip() if data.service_name else "infra-service"
         analysis = {
             "repo": f"{data.environment}/{service_name}",
             "branch": data.environment,
@@ -237,6 +321,7 @@ async def provision_request(data: InfrastructureRequest):
             "stack": stack_items,
             "project_type": ptype,
             "ai_powered": bool(data.natural_language_request),
+            "validations": validations,
             "readiness": {
                 "score": 90 if data.monitoring == "prometheus-grafana" else 75,
                 "signals": {
@@ -292,7 +377,10 @@ async def provision_request(data: InfrastructureRequest):
 
         security_dashboard = generate_security_dashboard(analysis, stack_items, configs)
 
-        session_manager = get_session_manager()
+        try:
+            session_manager = get_session_manager()
+        except RuntimeError:
+            session_manager = await initialize_session_manager()
         user_id = data.owner_id if data.owner_id else str(uuid.uuid4())
         session = await session_manager.create_session(
             repo_url=f"infra://{data.environment}/{service_name}",
@@ -412,7 +500,10 @@ async def analyze_repo(data: AnalyzeRequest):
         security_dashboard = generate_security_dashboard(analysis, stack, configs)
         
         # Create session for collaboration
-        session_manager = get_session_manager()
+        try:
+            session_manager = get_session_manager()
+        except RuntimeError:
+            session_manager = await initialize_session_manager()
         user_id = data.owner_id if data.owner_id else str(uuid.uuid4())
         session = await session_manager.create_session(
             repo_url=data.repo_url,

@@ -92,8 +92,12 @@ class SessionManager:
                 print("  Using in-memory storage instead")
                 self.redis_client = None
         
-        # Start cleanup task
-        self.cleanup_task = asyncio.create_task(self._cleanup_expired_sessions())
+        # Start cleanup task if event loop is running
+        try:
+            loop = asyncio.get_running_loop()
+            self.cleanup_task = loop.create_task(self._cleanup_expired_sessions())
+        except RuntimeError:
+            self.cleanup_task = None
     
     async def close(self):
         """Close Redis connection and cleanup"""
@@ -379,6 +383,7 @@ async def initialize_session_manager(redis_url: Optional[str] = None, ttl_hours:
     global session_manager
     session_manager = SessionManager(redis_url=redis_url, ttl_hours=ttl_hours)
     await session_manager.initialize()
+    return session_manager
 
 
 async def close_session_manager():
