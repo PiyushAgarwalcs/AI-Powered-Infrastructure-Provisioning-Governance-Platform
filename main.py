@@ -26,6 +26,10 @@ from visualizations import (
     generate_savings_potential_chart, generate_progress_indicators
 )
 from security_compliance import generate_security_dashboard
+from requirement_parser import (
+    parse_infrastructure_requirements, ParseResult, InfrastructureSpec,
+    ServiceType, Environment, DatabaseType, NetworkExposure, MonitoringPreference
+)
 import httpx
 import uvicorn
 import os
@@ -82,6 +86,17 @@ class InfrastructureRequest(BaseModel):
     owner_id: str = ""
 
 
+class ParseRequirementRequest(BaseModel):
+    prompt: str
+    ai_provider: str = "rule-based"  # rule-based, ollama, watsonx, openai, anthropic
+    ollama_model: str = "llama3"
+    ollama_endpoint: str = "http://localhost:11434"
+    watsonx_api_key: str = ""
+    watsonx_project_id: str = ""
+    openai_api_key: str = ""
+    anthropic_api_key: str = ""
+
+
 class AnalyzeRequest(BaseModel):
     repo_url: str
     github_token: str = ""
@@ -118,6 +133,50 @@ async def get_config_usage(config_type: str):
     if config_type not in CONFIG_USAGE:
         raise HTTPException(status_code=404, detail="Config type not found")
     return CONFIG_USAGE[config_type]
+
+
+@app.post("/api/infrastructure/parse")
+async def parse_infrastructure_endpoint(data: ParseRequirementRequest):
+    """
+    Parse a natural-language infrastructure requirement into a validated Pydantic specification.
+    Supports Ollama local LLM and rule-based heuristic extraction.
+    The LLM never executes commands or provisions resources.
+    """
+    try:
+        provider = None
+        if data.ai_provider == "ollama":
+            provider = AIProviderFactory.create_provider(
+                "ollama",
+                model=data.ollama_model,
+                endpoint=data.ollama_endpoint
+            )
+        elif data.ai_provider == "openai" and data.openai_api_key:
+            provider = AIProviderFactory.create_provider(
+                "openai",
+                api_key=data.openai_api_key
+            )
+        elif data.ai_provider == "anthropic" and data.anthropic_api_key:
+            provider = AIProviderFactory.create_provider(
+                "anthropic",
+                api_key=data.anthropic_api_key
+            )
+        elif data.ai_provider == "watsonx" and data.watsonx_api_key:
+            provider = AIProviderFactory.create_provider(
+                "watsonx",
+                api_key=data.watsonx_api_key,
+                project_id=data.watsonx_project_id
+            )
+        else:
+            provider = AIProviderFactory.create_provider("rule-based")
+
+        result = await parse_infrastructure_requirements(
+            data.prompt,
+            ai_provider=provider,
+            preferred_model=data.ollama_model
+        )
+        return result.model_dump() if hasattr(result, "model_dump") else result.dict()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse requirements: {str(e)}")
 
 
 @app.post("/api/provision/request")

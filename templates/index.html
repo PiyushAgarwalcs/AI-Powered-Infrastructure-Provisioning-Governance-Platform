@@ -300,12 +300,18 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
     
     <!-- Natural Language Request Field -->
     <div class="input-group">
-      <label for="naturalLanguageRequest">Natural-Language Infrastructure Request</label>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <label for="naturalLanguageRequest" style="margin-bottom: 0;">Natural-Language Infrastructure Request</label>
+        <button type="button" class="btn-outline" onclick="parseNaturalLanguage()" style="font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: var(--primary);">
+          ✨ AI Parse & Autofill
+        </button>
+      </div>
       <div class="input-wrapper">
         <textarea id="naturalLanguageRequest" rows="3" placeholder="e.g. Deploy a high-availability Python REST API with a PostgreSQL database, 3 replicas in production, exposed via Ingress with Prometheus monitoring" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; color: var(--text); font-size: 14px; font-family: inherit; resize: vertical; outline: none; transition: 0.2s;"></textarea>
       </div>
+      <div id="parse-feedback" style="display: none; margin-top: 8px; font-size: 12px; padding: 8px 12px; border-radius: 8px; line-height: 1.4;"></div>
       <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
-        💡 State your infrastructure requirements in plain English, or configure parameters directly below.
+        💡 State your infrastructure requirements in plain English, then click <b>AI Parse & Autofill</b> or configure parameters directly below.
       </div>
     </div>
     
@@ -979,6 +985,76 @@ function startLoading() {
 function stopLoading() {
   clearInterval(stepInterval);
   document.getElementById('loading').style.display = 'none';
+}
+
+async function parseNaturalLanguage() {
+  const prompt = document.getElementById('naturalLanguageRequest').value.trim();
+  const feedbackEl = document.getElementById('parse-feedback');
+  if (!prompt) {
+    if (feedbackEl) {
+      feedbackEl.style.display = 'block';
+      feedbackEl.style.background = 'rgba(239, 68, 68, 0.1)';
+      feedbackEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+      feedbackEl.style.color = '#ef4444';
+      feedbackEl.innerHTML = '⚠️ Please enter an infrastructure requirement to parse.';
+    }
+    return;
+  }
+
+  const aiProvider = document.getElementById('aiProvider')?.value || 'rule-based';
+  const ollamaModel = document.getElementById('ollamaModel')?.value || 'llama3';
+  const ollamaEndpoint = document.getElementById('ollamaEndpoint')?.value || 'http://localhost:11434';
+
+  feedbackEl.style.display = 'block';
+  feedbackEl.style.background = 'rgba(59, 130, 246, 0.1)';
+  feedbackEl.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+  feedbackEl.style.color = 'var(--primary)';
+  feedbackEl.innerHTML = '🤖 Analyzing infrastructure requirements...';
+
+  try {
+    const res = await fetch('/api/infrastructure/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: prompt,
+        ai_provider: aiProvider,
+        ollama_model: ollamaModel,
+        ollama_endpoint: ollamaEndpoint
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to parse');
+
+    if (data.spec) {
+      const s = data.spec;
+      if (document.getElementById('serviceType')) document.getElementById('serviceType').value = s.service_type;
+      if (document.getElementById('environment')) document.getElementById('environment').value = s.environment;
+      if (document.getElementById('replicaCount')) document.getElementById('replicaCount').value = s.replica_count;
+      if (document.getElementById('databaseType')) document.getElementById('databaseType').value = s.database;
+      if (document.getElementById('networkExposure')) document.getElementById('networkExposure').value = s.network_exposure;
+      if (document.getElementById('monitoringPreference')) document.getElementById('monitoringPreference').value = s.monitoring;
+      if (document.getElementById('serviceName') && s.service_name) document.getElementById('serviceName').value = s.service_name;
+
+      let msg = `✅ Parsed successfully (${data.parser_used}) with ${Math.round((s.confidence_score || 1) * 100)}% confidence. Form updated!`;
+      if (data.clarifications_needed && data.clarifications_needed.length > 0) {
+        msg += `<br><strong>Notes:</strong><ul style="margin: 4px 0 0 16px;">` + data.clarifications_needed.map(c => `<li>${c}</li>`).join('') + `</ul>`;
+      }
+      feedbackEl.style.background = 'rgba(16, 185, 129, 0.1)';
+      feedbackEl.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+      feedbackEl.style.color = 'var(--success)';
+      feedbackEl.innerHTML = msg;
+    } else {
+      feedbackEl.style.background = 'rgba(245, 158, 11, 0.1)';
+      feedbackEl.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+      feedbackEl.style.color = 'var(--warning)';
+      feedbackEl.innerHTML = `⚠️ Clarification needed: ${data.clarifications_needed.join(', ')}`;
+    }
+  } catch (err) {
+    feedbackEl.style.background = 'rgba(239, 68, 68, 0.1)';
+    feedbackEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+    feedbackEl.style.color = '#ef4444';
+    feedbackEl.innerHTML = `❌ Error parsing: ${err.message}`;
+  }
 }
 
 const PROVISION_STEPS = [
