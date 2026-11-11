@@ -16,6 +16,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from pydantic import ValidationError
+from requirement_parser import InfrastructureSpec
+
 
 # ── Enumerations ──────────────────────────────────────────────────────────────
 
@@ -66,6 +69,7 @@ class GovernanceReport:
 class ApprovalRecord:
     approval_id: str
     plan_hash: str
+    spec_hash: str
     service_name: str
     approved_by: str
     status: ApprovalStatus
@@ -234,6 +238,27 @@ def evaluate_policies(
     return report
 
 
+def canonicalize_infrastructure_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a validated specification with defaults, or preserve invalid input."""
+    try:
+        normalized = InfrastructureSpec(**spec)
+        return (
+            normalized.model_dump(mode="json")
+            if hasattr(normalized, "model_dump")
+            else normalized.dict()
+        )
+    except ValidationError:
+        return spec
+
+
+def infrastructure_spec_hash(spec: Dict[str, Any]) -> str:
+    """Hash the validated, canonical form of a provisioning specification."""
+    canonical_spec = canonicalize_infrastructure_spec(spec)
+    return hashlib.sha256(
+        json.dumps(canonical_spec, sort_keys=True, default=str).encode()
+    ).hexdigest()
+
+
 # ── Approval Workflow ─────────────────────────────────────────────────────────
 
 def submit_for_approval(
@@ -249,7 +274,11 @@ def submit_for_approval(
     """
     import uuid
     approval_id = str(uuid.uuid4())[:12]
-    service_name = spec.get("service_name", "unknown")
+    canonical_spec = canonicalize_infrastructure_spec(spec)
+    service_name = canonical_spec.get("service_name", "unknown")
+    spec_hash = hashlib.sha256(
+        json.dumps(canonical_spec, sort_keys=True, default=str).encode()
+    ).hexdigest()
 
     plan_hash = governance_report.plan_hash
     if not plan_hash and plan_json:
@@ -269,6 +298,7 @@ def submit_for_approval(
     record = ApprovalRecord(
         approval_id=approval_id,
         plan_hash=plan_hash,
+        spec_hash=spec_hash,
         service_name=service_name,
         approved_by=requester,
         status=status,
@@ -352,6 +382,7 @@ def _approval_to_dict(record: ApprovalRecord) -> Dict[str, Any]:
     return {
         "approval_id": record.approval_id,
         "plan_hash": record.plan_hash,
+        "spec_hash": record.spec_hash,
         "service_name": record.service_name,
         "approved_by": record.approved_by,
         "status": record.status.value,

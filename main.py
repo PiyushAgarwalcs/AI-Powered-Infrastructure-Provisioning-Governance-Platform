@@ -44,7 +44,12 @@ from terraform_runner import (
 )
 from governance import (
     evaluate_policies, submit_for_approval, approve_plan, reject_plan,
-    get_approval, governance_report_to_dict,
+    get_approval, governance_report_to_dict, canonicalize_infrastructure_spec,
+    infrastructure_spec_hash,
+)
+from kubernetes_provisioner import (
+    KubernetesProvisioningError, deploy_spec_to_kind,
+    get_kind_workload_status, list_kind_clusters,
 )
 import httpx
 import uvicorn
@@ -172,6 +177,13 @@ class RejectRequest(BaseModel):
     reason: str = "Rejected by operator"
 
 
+class KindDeployRequest(BaseModel):
+    """Request body for an explicitly approved local Kind deployment."""
+    spec: InfrastructureSpec
+    cluster_name: str
+    approval_id: str
+
+
 @app.post("/api/governance/evaluate")
 async def governance_evaluate(data: GovernanceEvalRequest):
     """
@@ -191,13 +203,14 @@ async def governance_evaluate(data: GovernanceEvalRequest):
     The LLM never influences policy decisions.
     """
     try:
+        spec = canonicalize_infrastructure_spec(data.spec)
         report = evaluate_policies(
-            spec=data.spec,
+            spec=spec,
             blast_radius=data.blast_radius,
             plan_json=data.plan_json,
         )
         record = submit_for_approval(
-            spec=data.spec,
+            spec=spec,
             governance_report=report,
             requester=data.requester,
             plan_json=data.plan_json,
@@ -252,6 +265,74 @@ async def governance_get_approval(approval_id: str):
     if not record:
         raise HTTPException(status_code=404, detail=f"Approval '{approval_id}' not found.")
     return record
+
+
+@app.get("/api/kubernetes/clusters")
+async def kubernetes_clusters():
+    """List local Kind clusters available for controlled provisioning."""
+    try:
+        return {"clusters": list_kind_clusters()}
+    except KubernetesProvisioningError as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e))
+
+
+@app.post("/api/kubernetes/deploy")
+async def kubernetes_deploy(data: KindDeployRequest):
+    """Deploy validated generated manifests to a local Kind cluster after approval."""
+    approval = get_approval(data.approval_id)
+    if not approval or approval["status"] != "approved":
+        raise HTTPException(
+            status_code=403,
+            detail="A valid, approved governance record is required before provisioning.",
+        )
+    if approval["service_name"] != data.spec.service_name:
+        raise HTTPException(
+            status_code=403,
+            detail="The approved service name does not match the requested deployment.",
+        )
+    if approval["spec_hash"] != infrastructure_spec_hash(
+        data.spec.model_dump(mode="json")
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="The approved infrastructure specification does not match this deployment.",
+        )
+    if not approval["governance"]["provisioning_allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail="The governance record does not permit provisioning.",
+        )
+
+    spec_data = data.spec.model_dump(mode="json")
+    report = evaluate_policies(spec=spec_data)
+    if not report.provisioning_allowed:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Current infrastructure policy checks block provisioning.",
+                "failed_policies": [
+                    {"id": policy.policy_id, "message": policy.message}
+                    for policy in report.failed
+                ],
+            },
+        )
+    try:
+        return deploy_spec_to_kind(data.spec, data.cluster_name)
+    except KubernetesProvisioningError as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e))
+
+
+@app.get("/api/kubernetes/status")
+async def kubernetes_status(
+    cluster_name: str,
+    service_name: str,
+    environment: Environment,
+):
+    """Return deployment, pod, and service status for a generated service."""
+    try:
+        return get_kind_workload_status(cluster_name, service_name, environment.value)
+    except KubernetesProvisioningError as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e))
 
 
 @app.get("/")
