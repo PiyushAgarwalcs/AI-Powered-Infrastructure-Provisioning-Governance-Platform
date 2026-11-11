@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 from analyzer import RepoAnalyzer
 from generators import (
     gen_dockerfile, gen_compose, gen_kubernetes,
@@ -40,6 +41,10 @@ from requirement_parser import (
 from terraform_runner import (
     run_terraform_plan_analysis, parse_plan_json, calculate_blast_radius,
     blast_radius_to_dict, execution_result_to_dict,
+)
+from governance import (
+    evaluate_policies, submit_for_approval, approve_plan, reject_plan,
+    get_approval, governance_report_to_dict,
 )
 import httpx
 import uvicorn
@@ -144,6 +149,109 @@ class TerraformPlanRequest(BaseModel):
     """Request body for POST /api/terraform/blast-radius (pre-parsed plan JSON)."""
     plan_json: dict
     service_name: str = "api-service"
+
+
+class GovernanceEvalRequest(BaseModel):
+    """Request body for POST /api/governance/evaluate."""
+    spec: dict                              # InfrastructureSpec fields as dict
+    blast_radius: Optional[dict] = None    # From /api/terraform/analyze
+    plan_json: Optional[dict] = None       # Raw Terraform plan JSON (for hash)
+    requester: str = "operator"
+
+
+class ApproveRequest(BaseModel):
+    """Request body for POST /api/governance/approve."""
+    approval_id: str
+    approver: str = "operator"
+    current_plan_json: Optional[dict] = None  # For stale-plan detection
+
+
+class RejectRequest(BaseModel):
+    """Request body for POST /api/governance/reject."""
+    approval_id: str
+    reason: str = "Rejected by operator"
+
+
+@app.post("/api/governance/evaluate")
+async def governance_evaluate(data: GovernanceEvalRequest):
+    """
+    Evaluate OPA-equivalent governance policies against an infrastructure spec.
+
+    Checks:
+    - Replica limits (floor, ceiling, production HA minimum)
+    - Network exposure rules (workers must not be publicly exposed)
+    - Destructive change detection (destroy/replace actions)
+    - Production deletion protection
+    - Blast-radius thresholds (HIGH warns, CRITICAL blocks)
+    - Database exposure warnings
+    - Monitoring requirements
+
+    Returns passed, failed, and warning policy results.
+    Provisioning is BLOCKED when any MANDATORY policy fails.
+    The LLM never influences policy decisions.
+    """
+    try:
+        report = evaluate_policies(
+            spec=data.spec,
+            blast_radius=data.blast_radius,
+            plan_json=data.plan_json,
+        )
+        record = submit_for_approval(
+            spec=data.spec,
+            governance_report=report,
+            requester=data.requester,
+            plan_json=data.plan_json,
+        )
+        return {
+            "governance": governance_report_to_dict(report),
+            "approval_id": record.approval_id,
+            "approval_status": record.status.value,
+            "provisioning_allowed": report.provisioning_allowed,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Policy evaluation failed: {str(e)}")
+
+
+@app.post("/api/governance/approve")
+async def governance_approve(data: ApproveRequest):
+    """
+    Approve a pending infrastructure plan.
+
+    Before granting approval:
+    - Verifies the approval_id exists and is in PENDING state.
+    - Re-checks plan hash integrity (stale-plan detection).
+    - If the plan has changed since evaluation, approval is BLOCKED.
+
+    SAFETY: Approval only unlocks controlled provisioning in Step 7.
+    This endpoint never provisions resources itself.
+    """
+    try:
+        result = approve_plan(
+            approval_id=data.approval_id,
+            approver=data.approver,
+            current_plan_json=data.current_plan_json,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Approval failed: {str(e)}")
+
+
+@app.post("/api/governance/reject")
+async def governance_reject(data: RejectRequest):
+    """Reject a pending plan. Idempotent for already-rejected plans."""
+    try:
+        return reject_plan(approval_id=data.approval_id, reason=data.reason)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Rejection failed: {str(e)}")
+
+
+@app.get("/api/governance/approval/{approval_id}")
+async def governance_get_approval(approval_id: str):
+    """Retrieve an approval record by ID."""
+    record = get_approval(approval_id)
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Approval '{approval_id}' not found.")
+    return record
 
 
 @app.get("/")
