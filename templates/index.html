@@ -12,48 +12,53 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <style>
 :root {
-  --bg: #030712;
-  --panel: #111827;
-  --panel-hover: #1f2937;
-  --border: #1f2937;
-  --border-glow: rgba(59, 130, 246, 0.3);
-  --text: #f9fafb;
-  --text-muted: #9ca3af;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --accent: #8b5cf6;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --ibm: #0f62fe;
-  --radius: 12px;
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --panel-hover: #f0f3f6;
+  --border: #dfe4e9;
+  --border-glow: rgba(91, 143, 177, 0.18);
+  --text: #29323b;
+  --text-muted: #68737e;
+  --primary: #5b8aaa;
+  --primary-hover: #496f89;
+  --accent: #c77d98;
+  --success: #4a8069;
+  --warning: #a97936;
+  --ibm: #668da8;
   --sidebar-w: 260px;
-  --card-shadow: none;
-  --editor-bg: #0d1117;
-  --editor-header: #161b22;
+  --card-shadow: 0 1px 3px rgba(35, 45, 55, 0.06);
+  --editor-bg: #1f2937;
+  --editor-header: #111827;
 }
 
-[data-theme="light"] {
-  --bg: #f3f4f6;
-  --panel: #ffffff;
-  --panel-hover: #f9fafb;
-  --border: #e5e7eb;
-  --text: #111827;
-  --text-muted: #6b7280;
-  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+[data-theme="dark"] {
+  --bg: #20252b;
+  --panel: #292f36;
+  --panel-hover: #343c45;
+  --border: #3b444e;
+  --border-glow: rgba(135, 174, 199, 0.2);
+  --text: #edf0f2;
+  --text-muted: #aab3bb;
+  --primary: #8eb6d0;
+  --primary-hover: #a5c5d9;
+  --accent: #d89ab0;
+  --success: #87b49d;
+  --warning: #d5aa6d;
+  --ibm: #8eb6d0;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
   --editor-bg: #1f2937;
   --editor-header: #111827;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; transition: background-color 0.3s, color 0.3s; }
-::selection { background: var(--primary); color: #fff; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; transition: background-color 0.2s, color 0.2s; }
+::selection { background: #dceaf2; color: #29323b; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* Background effects */
-.bg-glow { position: fixed; top: -20%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(15,98,254,0.1) 0%, transparent 70%); pointer-events: none; z-index: 0; }
-.bg-glow-2 { position: fixed; bottom: -20%; right: -10%; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+input, select, textarea, button { font: inherit; }
+input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* Utilities */
 .flex { display: flex; }
@@ -63,12 +68,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 
 /* --- VIEW 1: LANDING / SETUP --- */
 #setup-view { position: fixed; inset: 0; background: var(--bg); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 40px 20px; transition: background-color 0.3s; }
-.setup-card { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 100%; max-width: 780px; box-shadow: var(--card-shadow); position: relative; overflow: hidden; transition: 0.3s; }
-.setup-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--ibm), var(--accent)); }
+.setup-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 40px; width: 100%; max-width: 780px; box-shadow: var(--card-shadow); position: relative; overflow: hidden; transition: 0.2s; }
+.setup-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--primary); }
 .setup-header { text-align: center; margin-bottom: 32px; }
-.setup-logo { font-size: 32px; margin-bottom: 16px; display: inline-block; background: var(--panel-hover); padding: 12px; border-radius: 16px; border: 1px solid var(--border); }
-.setup-header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
-.setup-header h1 span { background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.setup-logo { font-size: 28px; margin-bottom: 16px; display: inline-block; background: var(--panel-hover); padding: 10px; border-radius: 10px; border: 1px solid var(--border); }
+.setup-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 8px; }
+.setup-header h1 span { color: var(--primary); }
 .setup-header p { color: var(--text-muted); font-size: 15px; }
 
 .input-group { margin-bottom: 24px; }
@@ -80,15 +85,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 .optional-creds input { padding: 12px 16px; font-size: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); outline: none; }
 .optional-creds input:focus { border-color: var(--primary); }
 
-.btn-primary { width: 100%; background: linear-gradient(135deg, var(--ibm), var(--accent)); color: white; border: none; padding: 16px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px; }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(15,98,254,0.4); }
+.btn-primary { width: 100%; background: var(--primary); color: white; border: none; padding: 14px 16px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+.btn-primary:hover { background: var(--primary-hover); }
 .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-.loading-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 20px; color: #fff;}
-.spinner { width: 50px; height: 50px; border: 3px solid #374151; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+.loading-overlay { position: absolute; inset: 0; background: var(--panel); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 12px; color: var(--text);}
+.spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-.loading-subtext { color: #9ca3af; font-size: 14px; }
+.loading-subtext { color: var(--text-muted); font-size: 14px; }
 
 /* --- VIEW 2: DASHBOARD --- */
 #dashboard-view { flex: 1; display: none; width: 100%; z-index: 1; }
@@ -97,16 +102,16 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 .sidebar { width: var(--sidebar-w); background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: 0.3s; }
 .sidebar-header { height: 70px; display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--border); }
 .sidebar-logo { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
-.sidebar-logo span { background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.sidebar-logo span { color: var(--primary); }
 .nav-menu { padding: 20px 12px; flex: 1; overflow-y: auto; }
-.nav-section { font-size: 11px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; margin: 0 12px 8px; }
+.nav-section { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin: 0 12px 8px; }
 .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 4px; cursor: pointer; transition: 0.2s; }
 .nav-item:hover { background: var(--panel-hover); color: var(--text); }
-.nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
+.nav-item.active { background: rgba(91, 138, 170, 0.12); color: var(--primary); }
 .nav-item i { font-style: normal; font-size: 16px; width: 20px; text-align: center; }
 .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); }
 .user-profile { display: flex; align-items: center; gap: 12px; }
-.avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--ibm), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white;}
+.avatar { width: 36px; height: 36px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; color: white;}
 .user-info div:first-child { font-size: 14px; font-weight: 600; color: var(--text); }
 .user-info div:last-child { font-size: 12px; color: var(--text-muted); }
 
@@ -118,33 +123,22 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 .repo-name a { color: var(--text); text-decoration: none; }
 .repo-name a:hover { color: var(--primary); }
 .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; background: var(--bg); border: 1px solid var(--border); }
-.badge.watsonx { background: rgba(15,98,254,0.1); border-color: rgba(15,98,254,0.3); color: var(--ibm); }
+.badge.watsonx { background: rgba(91,138,170,0.1); border-color: rgba(91,138,170,0.25); color: var(--primary); }
 .topbar-actions { display: flex; gap: 12px; }
 .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
 .btn-outline:hover { background: var(--panel-hover); border-color: var(--primary); color: var(--primary); }
 
-.content-area { flex: 1; overflow-y: auto; padding: 32px; }
-.view-panel { display: none; animation: fadeIn 0.3s ease; }
+.content-area { flex: 1; overflow-y: auto; padding: 28px; }
+.view-panel { display: none; }
 .view-panel.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Overview View */
 .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
-.metric-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 24px; position: relative; overflow: hidden; box-shadow: var(--card-shadow); transition: 0.3s; }
-.metric-card:hover { transform: translateY(-4px); }
+.metric-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 22px; position: relative; overflow: hidden; box-shadow: var(--card-shadow); }
 .metric-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
-.metric-card::after { content: ''; position: absolute; inset: 0; border-radius: 16px; padding: 1px; background: linear-gradient(135deg, rgba(59,130,246,0.4), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: 0.3s; pointer-events: none; }
-.metric-card:hover::after { opacity: 1; }
-.metric-card:nth-child(1):hover { box-shadow: 0 0 30px rgba(59,130,246,0.15); }
 .metric-card:nth-child(2)::before { background: var(--accent); }
-.metric-card:nth-child(2)::after { background: linear-gradient(135deg, rgba(139,92,246,0.4), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
-.metric-card:nth-child(2):hover { box-shadow: 0 0 30px rgba(139,92,246,0.15); }
 .metric-card:nth-child(3)::before { background: var(--success); }
-.metric-card:nth-child(3)::after { background: linear-gradient(135deg, rgba(16,185,129,0.4), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
-.metric-card:nth-child(3):hover { box-shadow: 0 0 30px rgba(16,185,129,0.15); }
-.metric-card:nth-child(4)::before { background: var(--ibm); }
-.metric-card:nth-child(4)::after { background: linear-gradient(135deg, rgba(15,98,254,0.4), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
-.metric-card:nth-child(4):hover { box-shadow: 0 0 30px rgba(15,98,254,0.15); }
+.metric-card:nth-child(4)::before { background: var(--primary); }
 .metric-title { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
 .metric-value { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
 .metric-sub { font-size: 12px; color: var(--text-muted); }
@@ -152,7 +146,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 /* AI Recommendations */
 .recs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .rec-item { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; transition: 0.3s; }
-.rec-item:hover { border-color: var(--primary); transform: translateY(-2px); }
+.rec-item:hover { border-color: var(--primary); }
 .rec-icon { font-size: 24px; margin-bottom: 8px; }
 .rec-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
 .rec-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
@@ -164,8 +158,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 /* Pipeline Visualizer */
 .pipeline-flow { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; flex-wrap: wrap; gap: 12px; }
 .pipe-node { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 100px; flex: 1; cursor: pointer; transition: transform 0.2s; }
-.pipe-node:hover { transform: translateY(-4px); }
-.pipe-node.active .pipe-icon-wrapper { border-color: var(--success); box-shadow: 0 0 20px rgba(16,185,129,0.3); }
+.pipe-node.active .pipe-icon-wrapper { border-color: var(--success); }
 .pipe-node.missing .pipe-icon-wrapper { border-color: var(--warning); opacity: 0.6; }
 .pipe-node.recommended .pipe-icon-wrapper { border-color: var(--primary); }
 .pipe-icon-wrapper { width: 64px; height: 64px; background: var(--bg); border: 3px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; position: relative; transition: 0.3s; }
@@ -176,10 +169,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 .pipe-label { font-size: 13px; font-weight: 700; text-align: center; color: var(--text); }
 .pipe-tools { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.3; }
 .pipe-time { font-size: 10px; color: var(--text-muted); background: var(--bg); padding: 2px 8px; border-radius: 4px; }
-.pipe-line { flex: 0 0 40px; height: 3px; background: linear-gradient(90deg, var(--border) 0%, var(--border) 50%, transparent 50%, transparent 100%); background-size: 8px 3px; position: relative; top: -30px; }
+.pipe-line { flex: 0 0 40px; height: 2px; background: var(--border); position: relative; top: -30px; }
 
 /* Config Usage Cards */
-.config-usage-card { background: linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(139,92,246,0.05) 100%); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.config-usage-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
 .usage-header { display: flex; gap: 16px; align-items: start; margin-bottom: 20px; }
 .usage-icon { font-size: 36px; flex-shrink: 0; }
 .usage-title { font-size: 14px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
@@ -199,8 +192,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 .usage-details ul { list-style: none; padding: 0; margin: 0; }
 .usage-details li { padding: 8px 12px; font-size: 13px; line-height: 1.6; border-left: 2px solid var(--border); margin-left: 12px; margin-bottom: 8px; }
 .usage-details li:before { content: "•"; color: var(--primary); font-weight: 700; margin-right: 8px; }
-.pipe-line::after { content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 100%; background: linear-gradient(90deg, transparent, var(--primary), transparent); animation: flow 2s infinite linear; }
-@keyframes flow { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
 /* Chart Container */
 .chart-container { position: relative; height: 220px; width: 100%; }
@@ -244,13 +235,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 .check-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .check-item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; gap: 10px; align-items: flex-start; }
 .check-mark { width: 24px; height: 24px; border-radius: 999px; display: grid; place-items: center; flex: 0 0 auto; font-size: 13px; font-weight: 800; }
-.check-mark.pass { background: rgba(16,185,129,0.16); color: var(--success); }
-.check-mark.fail { background: rgba(245,158,11,0.16); color: var(--warning); }
+.check-mark.pass { background: rgba(74,128,105,0.14); color: var(--success); }
+.check-mark.fail { background: rgba(169,121,54,0.14); color: var(--warning); }
 .check-title { font-size: 13px; font-weight: 800; margin-bottom: 2px; }
 .check-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
 .action-list { display: grid; gap: 10px; }
 .action-item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text-muted); font-size: 13px; line-height: 1.45; }
-.blocker-item { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.08); color: var(--text); }
+.blocker-item { border-color: rgba(169,121,54,0.3); background: rgba(169,121,54,0.08); color: var(--text); }
 @media (max-width: 1024px) { .readiness-layout { grid-template-columns: 1fr; } .check-grid { grid-template-columns: 1fr; } }
 .theme-toggle-wrapper { position: absolute; top: 20px; right: 20px; }
 
@@ -283,17 +274,14 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 </style>
 </head>
 <body>
-<div class="bg-glow"></div>
-<div class="bg-glow-2"></div>
-
 <!-- SETUP VIEW -->
 <div id="setup-view">
   <div class="theme-toggle-wrapper">
-    <button class="btn-outline" onclick="toggleTheme()" id="setup-theme-btn"> Light Mode</button>
+    <button class="btn-outline" onclick="toggleTheme()" id="setup-theme-btn"> Dark Mode</button>
   </div>
   <div class="setup-card">
     <div class="setup-header">
-      <div class="setup-logo">🏗️</div>
+      <div class="setup-logo">IG</div>
       <h1>Infrastructure <span>Provisioning & Governance</span></h1>
       <p>Natural-Language Infrastructure Generation, Blast Radius Analysis & OPA Governance</p>
     </div>
@@ -302,8 +290,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
     <div class="input-group">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <label for="naturalLanguageRequest" style="margin-bottom: 0;">Natural-Language Infrastructure Request</label>
-        <button type="button" class="btn-outline" onclick="parseNaturalLanguage()" style="font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: var(--primary);">
-          ✨ AI Parse & Autofill
+        <button type="button" class="btn-outline" onclick="parseNaturalLanguage()" style="font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; background: rgba(91,138,170,0.1); border-color: rgba(91,138,170,0.25); color: var(--primary);">
+          AI Parse & Autofill
         </button>
       </div>
       <div class="input-wrapper">
@@ -311,7 +299,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
       </div>
       <div id="parse-feedback" style="display: none; margin-top: 8px; font-size: 12px; padding: 8px 12px; border-radius: 8px; line-height: 1.4;"></div>
       <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
-        💡 State your infrastructure requirements in plain English, then click <b>AI Parse & Autofill</b> or configure parameters directly below.
+        State your infrastructure requirements in plain English, then click <b>AI Parse & Autofill</b> or configure parameters directly below.
       </div>
     </div>
     
@@ -383,7 +371,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
     
     <!-- Primary Provisioning Button -->
     <button class="btn-primary" id="provisionBtn" onclick="submitProvisionRequest()">
-      ⚡ Generate & Provision Infrastructure
+      Generate & Provision Infrastructure
     </button>
     
     <!-- Collapsible Advanced: Repository Analysis (Optional) -->
@@ -463,7 +451,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 <div id="dashboard-view">
   <aside class="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo">🏗️ Infra<span>Govern</span></div>
+      <div class="sidebar-logo">Infra<span>Govern</span></div>
     </div>
     
     <div class="nav-menu">
@@ -514,8 +502,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
         <span class="badge watsonx" id="topbar-ai"> IBM watsonx Active</span>
       </div>
       <div class="topbar-actions">
-        <button class="btn-outline" onclick="toggleTheme()" id="dash-theme-btn"> Light Mode</button>
-        <button class="btn-outline" onclick="downloadAllFiles()" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:#10b981;"> Download All</button>
+        <button class="btn-outline" onclick="toggleTheme()" id="dash-theme-btn"> Dark Mode</button>
+        <button class="btn-outline" onclick="downloadAllFiles()" style="background:rgba(74,128,105,0.1);border-color:rgba(74,128,105,0.25);color:var(--success);"> Download All</button>
         <button class="btn-outline" onclick="backToSetup()">← Back</button>
         <button class="btn-outline" onclick="location.reload()">+ New Project</button>
       </div>
@@ -525,10 +513,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
       <!-- Overview View -->
       <div id="view-overview" class="view-panel active">
         <!-- Active Infrastructure Specification Banner -->
-        <div class="card" id="infra-spec-card" style="margin-bottom: 24px; border-left: 4px solid var(--primary); background: linear-gradient(180deg, rgba(59,130,246,0.06) 0%, transparent 100%);">
+        <div class="card" id="infra-spec-card" style="margin-bottom: 24px; border-left: 4px solid var(--primary); background: var(--panel);">
           <div class="card-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
             <span style="display: flex; align-items: center; gap: 8px;">📋 Active Infrastructure Specification</span>
-            <span class="badge" id="spec-env-badge" style="background: rgba(16,185,129,0.15); color: var(--success); border-color: rgba(16,185,129,0.3); font-size: 11px; font-weight: 700; text-transform: uppercase;">PRODUCTION</span>
+            <span class="badge" id="spec-env-badge" style="background: rgba(74,128,105,0.12); color: var(--success); border-color: rgba(74,128,105,0.25); font-size: 11px; font-weight: 700; text-transform: uppercase;">PRODUCTION</span>
           </div>
           <div style="font-size: 13px; color: var(--text); margin-bottom: 16px; font-style: italic; background: var(--bg); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); line-height: 1.5;" id="spec-request-text">
             "Deploy a production-grade FastAPI service with PostgreSQL database, 3 replicas, Ingress exposure, and Prometheus metrics monitoring."
@@ -671,7 +659,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 
         <div class="card" style="margin-top: 24px;">
           <div class="card-title"><i>💬</i> Ask Questions About This Repository</div>
-          <div id="chat-history" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+          <div id="chat-history" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px; padding: 10px; background: var(--panel-hover); border-radius: 8px;">
             <div style="font-size: 13px; color: var(--text-muted); text-align: center;">Ask anything about the repository architecture, setup, or code.</div>
           </div>
           <div style="display: flex; gap: 10px;">
@@ -964,7 +952,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 
 <script>
 let globalData = {};
-let isLightMode = false;
+let isLightMode = true;
 let timeChartInst = null;
 let complexityChartInst = null;
 
@@ -980,14 +968,14 @@ function toggleAICredentials() {
 // Theme Toggle
 function toggleTheme() {
   isLightMode = !isLightMode;
-  if (isLightMode) {
-    document.documentElement.setAttribute('data-theme', 'light');
-    document.getElementById('setup-theme-btn').innerHTML = ' Dark Mode';
-    document.getElementById('dash-theme-btn').innerHTML = ' Dark Mode';
+  if (!isLightMode) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('setup-theme-btn').textContent = ' Light Mode';
+    document.getElementById('dash-theme-btn').textContent = ' Light Mode';
   } else {
     document.documentElement.removeAttribute('data-theme');
-    document.getElementById('setup-theme-btn').innerHTML = ' Light Mode';
-    document.getElementById('dash-theme-btn').innerHTML = ' Light Mode';
+    document.getElementById('setup-theme-btn').textContent = ' Dark Mode';
+    document.getElementById('dash-theme-btn').textContent = ' Dark Mode';
   }
   // Re-render charts to update grid lines colors
   if(timeChartInst) timeChartInst.update();
@@ -1530,8 +1518,8 @@ function renderDashboard(d) {
     aiBadge.textContent = ' AI Active';
   } else {
     aiBadge.className = 'badge';
-    aiBadge.style.background = 'rgba(245,158,11,0.1)';
-    aiBadge.style.borderColor = 'rgba(245,158,11,0.3)';
+    aiBadge.style.background = 'rgba(169,121,54,0.1)';
+    aiBadge.style.borderColor = 'rgba(169,121,54,0.25)';
     aiBadge.style.color = '#fbbf24';
     aiBadge.textContent = ' Smart Rule Generation';
   }
@@ -1650,7 +1638,7 @@ function renderCostEstimate(cost) {
   const warnings = document.getElementById('cost-warnings');
   if (cost.warnings && cost.warnings.length > 0) {
     warnings.innerHTML = cost.warnings.map(w => `
-      <div style="padding: 10px 12px; background: rgba(245,158,11,0.1); border-left: 3px solid var(--warning); border-radius: 6px; font-size: 13px; line-height: 1.5;">
+      <div style="padding: 10px 12px; background: rgba(169,121,54,0.1); border-left: 3px solid var(--warning); border-radius: 6px; font-size: 13px; line-height: 1.5;">
         ⚠️ ${w}
       </div>
     `).join('');
@@ -1701,7 +1689,7 @@ function renderReadiness(readiness) {
   document.getElementById('next-actions').innerHTML = (r.next_actions || []).map(item => `<div class="action-item">${item}</div>`).join('');
 }
 function initCharts(d) {
-  Chart.defaults.color = () => isLightMode ? '#6b7280' : '#9ca3af';
+  Chart.defaults.color = () => isLightMode ? '#68737e' : '#aab3bb';
   Chart.defaults.font.family = 'Inter';
   
   if (timeChartInst) timeChartInst.destroy();
@@ -1712,11 +1700,11 @@ function initCharts(d) {
   
   // Color code: green = repo already has it (low effort), orange = needs generation (high effort)
   const barColors = [
-    signals.docker   ? 'rgba(16,185,129,0.7)' : '#3b82f6',  // Docker
-    signals.infra    ? 'rgba(16,185,129,0.7)' : '#8b5cf6',  // K8s
-    signals.ci       ? 'rgba(16,185,129,0.7)' : '#f59e0b',  // CI/CD
-    signals.infra    ? 'rgba(16,185,129,0.7)' : '#ef4444',  // Terraform
-    signals.monitoring ? 'rgba(16,185,129,0.7)' : '#ec4899', // ELK
+    signals.docker   ? 'rgba(74,128,105,0.72)' : '#6d9bb8', // Docker
+    signals.infra    ? 'rgba(74,128,105,0.72)' : '#c77d98', // K8s
+    signals.ci       ? 'rgba(74,128,105,0.72)' : '#b98b58', // CI/CD
+    signals.infra    ? 'rgba(74,128,105,0.72)' : '#8d9ba5', // Terraform
+    signals.monitoring ? 'rgba(74,128,105,0.72)' : '#a68ca2', // ELK
   ];
   
   const ctxTime = document.getElementById('timeSavedChart').getContext('2d');
@@ -1747,7 +1735,7 @@ function initCharts(d) {
         }
       },
       scales: {
-        y: { beginAtZero: true, grid: { color: () => isLightMode ? '#e5e7eb' : '#374151' }, title: { display: true, text: 'Hours', font: { size: 11 } } },
+        y: { beginAtZero: true, grid: { color: () => isLightMode ? '#dfe4e9' : '#3b444e' }, title: { display: true, text: 'Hours', font: { size: 11 } } },
         x: { grid: { display: false } }
       }
     }
@@ -1770,9 +1758,9 @@ function initCharts(d) {
       datasets: [{
         label: 'Maturity Score',
         data: radarData,
-        backgroundColor: 'rgba(139, 92, 246, 0.2)',
-        borderColor: '#8b5cf6',
-        pointBackgroundColor: '#8b5cf6',
+        backgroundColor: 'rgba(199, 125, 152, 0.18)',
+        borderColor: '#c77d98',
+        pointBackgroundColor: '#c77d98',
       }]
     },
     options: {
@@ -1783,8 +1771,8 @@ function initCharts(d) {
         r: {
           min: 0,
           max: 100,
-          angleLines: { color: () => isLightMode ? '#e5e7eb' : '#374151' },
-          grid: { color: () => isLightMode ? '#e5e7eb' : '#374151' },
+          angleLines: { color: () => isLightMode ? '#dfe4e9' : '#3b444e' },
+          grid: { color: () => isLightMode ? '#dfe4e9' : '#3b444e' },
           ticks: { display: false },
           pointLabels: { font: { size: 11 } }
         }
@@ -1899,7 +1887,7 @@ function renderExecutiveSummary(exec) {
             <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">${phase.name}</div>
             <div style="font-size: 13px; color: var(--text-muted);">${phase.duration} days • ${phase.start_date} to ${phase.end_date}</div>
           </div>
-          <div style="background: ${idx === 0 ? 'rgba(59,130,246,0.1)' : idx === 1 ? 'rgba(139,92,246,0.1)' : 'rgba(16,185,129,0.1)'}; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">${Math.round((phase.duration / timeline.total_days) * 100)}%</div>
+          <div style="background: ${idx === 0 ? 'rgba(91,138,170,0.1)' : idx === 1 ? 'rgba(199,125,152,0.1)' : 'rgba(74,128,105,0.1)'}; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">${Math.round((phase.duration / timeline.total_days) * 100)}%</div>
         </div>
         <div style="font-size: 13px; line-height: 1.6; color: var(--text-muted); margin-bottom: 12px;">${phase.description}</div>
         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
@@ -1913,7 +1901,7 @@ function renderExecutiveSummary(exec) {
   const strengthsEl = document.getElementById('exec-strengths');
   if (exec.strengths && exec.strengths.length > 0) {
     strengthsEl.innerHTML = exec.strengths.map(s => `
-      <div style="padding: 12px; background: rgba(16,185,129,0.08); border-left: 3px solid var(--success); border-radius: 6px;">
+      <div style="padding: 12px; background: rgba(74,128,105,0.08); border-left: 3px solid var(--success); border-radius: 6px;">
         <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">${s.signal}</div>
         <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">${s.description}</div>
       </div>
@@ -1926,10 +1914,10 @@ function renderExecutiveSummary(exec) {
   const gapsEl = document.getElementById('exec-gaps');
   if (exec.gaps && exec.gaps.length > 0) {
     gapsEl.innerHTML = exec.gaps.map(g => `
-      <div style="padding: 12px; background: rgba(245,158,11,0.08); border-left: 3px solid var(--warning); border-radius: 6px;">
+      <div style="padding: 12px; background: rgba(169,121,54,0.08); border-left: 3px solid var(--warning); border-radius: 6px;">
         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
           <div style="font-size: 13px; font-weight: 700;">${g.signal}</div>
-          <span style="background: ${g.priority === 'high' ? 'rgba(239,68,68,0.1)' : g.priority === 'medium' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)'}; color: ${g.priority === 'high' ? '#ef4444' : g.priority === 'medium' ? '#f59e0b' : '#3b82f6'}; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;">${g.priority}</span>
+          <span style="background: ${g.priority === 'high' ? 'rgba(183,101,101,0.1)' : g.priority === 'medium' ? 'rgba(169,121,54,0.1)' : 'rgba(91,138,170,0.1)'}; color: ${g.priority === 'high' ? '#b76565' : g.priority === 'medium' ? '#a97936' : '#5b8aaa'}; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;">${g.priority}</span>
         </div>
         <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">${g.description}</div>
       </div>
@@ -1944,7 +1932,7 @@ function renderExecutiveSummary(exec) {
     recsEl.innerHTML = exec.recommendations.map((rec, idx) => `
       <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px;">
         <div style="display: flex; gap: 12px; align-items: start;">
-          <div style="background: ${rec.priority === 'critical' ? 'rgba(239,68,68,0.1)' : rec.priority === 'high' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)'}; color: ${rec.priority === 'critical' ? '#ef4444' : rec.priority === 'high' ? '#f59e0b' : '#3b82f6'}; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">${idx + 1}</div>
+          <div style="background: ${rec.priority === 'critical' ? 'rgba(183,101,101,0.1)' : rec.priority === 'high' ? 'rgba(169,121,54,0.1)' : 'rgba(91,138,170,0.1)'}; color: ${rec.priority === 'critical' ? '#b76565' : rec.priority === 'high' ? '#a97936' : '#5b8aaa'}; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">${idx + 1}</div>
           <div style="flex: 1;">
             <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">${rec.title}</div>
             <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px;">${rec.description}</div>
@@ -1962,10 +1950,10 @@ function renderExecutiveSummary(exec) {
   const risksEl = document.getElementById('exec-risks');
   if (exec.risks && exec.risks.length > 0) {
     risksEl.innerHTML = exec.risks.map(risk => `
-      <div style="background: var(--bg); border-left: 4px solid ${risk.level === 'critical' ? '#ef4444' : risk.level === 'high' ? '#f59e0b' : '#3b82f6'}; border-radius: 8px; padding: 14px;">
+      <div style="background: var(--bg); border-left: 4px solid ${risk.level === 'critical' ? '#b76565' : risk.level === 'high' ? '#a97936' : '#5b8aaa'}; border-radius: 8px; padding: 14px;">
         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
           <div style="font-size: 14px; font-weight: 700;">${risk.category}</div>
-          <span style="background: ${risk.level === 'critical' ? 'rgba(239,68,68,0.1)' : risk.level === 'high' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)'}; color: ${risk.level === 'critical' ? '#ef4444' : risk.level === 'high' ? '#f59e0b' : '#3b82f6'}; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;">${risk.level}</span>
+          <span style="background: ${risk.level === 'critical' ? 'rgba(183,101,101,0.1)' : risk.level === 'high' ? 'rgba(169,121,54,0.1)' : 'rgba(91,138,170,0.1)'}; color: ${risk.level === 'critical' ? '#b76565' : risk.level === 'high' ? '#a97936' : '#5b8aaa'}; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;">${risk.level}</span>
         </div>
         <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px;">${risk.description}</div>
         <div style="background: var(--panel); padding: 10px 12px; border-radius: 6px; font-size: 12px; line-height: 1.5;">
@@ -1979,7 +1967,7 @@ function renderExecutiveSummary(exec) {
   const quickWinsEl = document.getElementById('exec-quick-wins');
   if (exec.quick_wins && exec.quick_wins.length > 0) {
     quickWinsEl.innerHTML = exec.quick_wins.map((win, idx) => `
-      <div style="background: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(59,130,246,0.05) 100%); border: 1px solid var(--border); border-radius: 10px; padding: 16px;">
+      <div style="background: var(--panel-hover); border: 1px solid var(--border); border-radius: 10px; padding: 16px;">
         <div style="display: flex; gap: 12px; align-items: start;">
           <div style="background: var(--success); color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">⚡</div>
           <div style="flex: 1;">
@@ -1987,7 +1975,7 @@ function renderExecutiveSummary(exec) {
             <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px;">${win.description}</div>
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
               <span style="background: var(--panel); padding: 4px 10px; border-radius: 6px; font-size: 12px; border: 1px solid var(--border);">⏱️ ${win.effort}</span>
-              <span style="background: rgba(16,185,129,0.1); color: var(--success); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">📈 ${win.impact}</span>
+              <span style="background: rgba(74,128,105,0.1); color: var(--success); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">📈 ${win.impact}</span>
             </div>
           </div>
         </div>
@@ -2237,7 +2225,7 @@ function renderModuleBreakdown(breakdown) {
   // Relationships section
   if (relationships.length > 0) {
     html += `
-      <div style="margin-top: 24px; padding: 16px; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px;">
+      <div style="margin-top: 24px; padding: 16px; background: rgba(91,138,170,0.05); border: 1px solid rgba(91,138,170,0.2); border-radius: 10px;">
         <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--text);">🔗 Module Relationships</div>
         <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted);">The relationships among these modules are collaborative:</div>
         <ul style="margin: 0; padding-left: 20px; display: grid; gap: 6px;">
