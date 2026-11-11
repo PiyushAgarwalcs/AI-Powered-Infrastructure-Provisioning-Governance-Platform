@@ -37,6 +37,10 @@ from requirement_parser import (
     parse_infrastructure_requirements, ParseResult, InfrastructureSpec,
     ServiceType, Environment, DatabaseType, NetworkExposure, MonitoringPreference
 )
+from terraform_runner import (
+    run_terraform_plan_analysis, parse_plan_json, calculate_blast_radius,
+    blast_radius_to_dict, execution_result_to_dict,
+)
 import httpx
 import uvicorn
 import os
@@ -127,6 +131,19 @@ class AskRequest(BaseModel):
     anthropic_api_key: str = ""
     ollama_model: str = "llama3"
     ollama_endpoint: str = "http://localhost:11434"
+
+
+class TerraformAnalyzeRequest(BaseModel):
+    """Request body for POST /api/terraform/analyze."""
+    terraform_hcl: str
+    service_name: str = "api-service"
+    use_cli: bool = False   # Set True only when terraform binary is available
+
+
+class TerraformPlanRequest(BaseModel):
+    """Request body for POST /api/terraform/blast-radius (pre-parsed plan JSON)."""
+    plan_json: dict
+    service_name: str = "api-service"
 
 
 @app.get("/")
@@ -238,6 +255,80 @@ async def download_infrastructure_configs(spec: InfrastructureSpec):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}")
+
+
+@app.post("/api/terraform/analyze")
+async def analyze_terraform_plan(data: TerraformAnalyzeRequest):
+    """
+    Analyze a Terraform HCL configuration string.
+
+    Workflow:
+    1. Parse resource blocks from HCL (or run real terraform plan if use_cli=True
+       and terraform binary is available on PATH).
+    2. Build a deterministic plan JSON (mock or real).
+    3. Parse resource changes: add / modify / destroy / replace / no-op.
+    4. Extract resource dependencies (explicit + implicit).
+    5. Calculate a deterministic blast-radius score (0-100) and severity level.
+    6. Return warnings for destructive, replacement, database, network, or security changes.
+
+    SAFETY: `terraform apply` is NEVER executed by this endpoint.
+    The plan is never applied; this endpoint is read-only analysis only.
+    """
+    try:
+        if not data.terraform_hcl or not data.terraform_hcl.strip():
+            raise HTTPException(status_code=400, detail="terraform_hcl content is required")
+
+        execution = run_terraform_plan_analysis(
+            terraform_hcl=data.terraform_hcl,
+            service_name=data.service_name,
+            use_cli=data.use_cli,
+        )
+        result_dict = execution_result_to_dict(execution)
+        return {
+            "success": execution.success,
+            "service_name": data.service_name,
+            "execution_mode": "cli" if data.use_cli else "mock",
+            "blast_radius": result_dict["blast_radius"],
+            "command": result_dict["command"],
+            "stdout_preview": result_dict["stdout_preview"],
+            "error": result_dict["error"],
+            "note": "terraform apply is NEVER executed automatically. This is a read-only plan analysis.",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Terraform plan analysis failed: {str(e)}")
+
+
+@app.post("/api/terraform/blast-radius")
+async def get_blast_radius_for_spec(data: TerraformPlanRequest):
+    """
+    Calculate blast-radius from an already-parsed Terraform plan JSON object.
+
+    Accepts a Terraform plan JSON (from `terraform show -json`) and returns
+    the full blast-radius analysis: resource changes, dependencies, score, level,
+    and warnings — without executing any Terraform commands.
+
+    SAFETY: This endpoint only reads and parses data. It never executes Terraform.
+    """
+    try:
+        if not isinstance(data.plan_json, dict):
+            raise HTTPException(status_code=400, detail="plan_json must be a JSON object")
+
+        resource_changes, dependency_edges = parse_plan_json(data.plan_json)
+        blast = calculate_blast_radius(resource_changes, dependency_edges, data.plan_json)
+        blast_dict = blast_radius_to_dict(blast)
+
+        return {
+            "success": True,
+            "service_name": data.service_name,
+            "blast_radius": blast_dict,
+            "note": "Blast-radius computed from provided plan JSON. No Terraform commands were executed.",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Blast-radius calculation failed: {str(e)}")
 
 
 @app.post("/api/provision/request")
