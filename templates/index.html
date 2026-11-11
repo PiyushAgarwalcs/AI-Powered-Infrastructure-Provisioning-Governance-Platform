@@ -557,6 +557,30 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
           </div>
         </div>
 
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-title" style="justify-content: space-between;">
+            <span>Infrastructure Service Registry</span>
+            <button type="button" class="btn-outline" onclick="loadServiceRegistry()">Refresh</button>
+          </div>
+          <div id="service-registry-message" role="status" aria-live="polite" style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;"></div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+              <thead>
+                <tr>
+                  <th style="padding: 10px; border-bottom: 1px solid var(--border);">Service</th>
+                  <th style="padding: 10px; border-bottom: 1px solid var(--border);">Owner</th>
+                  <th style="padding: 10px; border-bottom: 1px solid var(--border);">Environment</th>
+                  <th style="padding: 10px; border-bottom: 1px solid var(--border);">Replicas</th>
+                  <th style="padding: 10px; border-bottom: 1px solid var(--border);">Status</th>
+                  <th style="padding: 10px; border-bottom: 1px solid var(--border);">Resources</th>
+                  <th style="padding: 10px; border-bottom: 1px solid var(--border);">Created</th>
+                </tr>
+              </thead>
+              <tbody id="service-registry-body"></tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="metrics-grid">
           <div class="metric-card">
             <div class="metric-title">Files Analyzed</div>
@@ -1411,7 +1435,57 @@ function clearProjectHistory() {
   renderProjectHistory();
 }
 
+async function loadServiceRegistry() {
+  const tableBody = document.getElementById('service-registry-body');
+  const message = document.getElementById('service-registry-message');
+  if (!tableBody || !message) return;
+
+  tableBody.replaceChildren();
+  message.textContent = 'Loading registered services...';
+  try {
+    const response = await fetch('/api/services');
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || 'Failed to load the service registry.');
+
+    const services = result.services || [];
+    if (!services.length) {
+      const row = tableBody.insertRow();
+      const cell = row.insertCell();
+      cell.colSpan = 7;
+      cell.textContent = 'No services have been registered yet.';
+      cell.style.padding = '12px 10px';
+    } else {
+      for (const service of services) {
+        const row = tableBody.insertRow();
+        const createdAt = service.created_at
+          ? new Date(service.created_at).toLocaleString()
+          : '';
+        const values = [
+          service.service_name,
+          service.owner,
+          service.environment,
+          service.replica_count,
+          service.deployment_status,
+          (service.resource_references || []).join(', '),
+          createdAt
+        ];
+        for (const value of values) {
+          const cell = row.insertCell();
+          cell.textContent = value == null ? '' : String(value);
+          cell.style.padding = '10px';
+          cell.style.borderBottom = '1px solid var(--border)';
+        }
+      }
+    }
+    message.textContent = `${services.length} registered service${services.length === 1 ? '' : 's'}.`;
+  } catch (error) {
+    message.textContent = `Unable to load services: ${error.message}`;
+  }
+}
+
 function renderDashboard(d) {
+  loadServiceRegistry();
+
   // Active Infrastructure Specification
   const specCard = document.getElementById('infra-spec-card');
   if (d.provision_spec) {

@@ -2,8 +2,8 @@ from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconn
 from fastapi.responses import StreamingResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import List, Optional
 from analyzer import RepoAnalyzer
 from generators import (
     gen_dockerfile, gen_compose, gen_kubernetes,
@@ -51,6 +51,10 @@ from kubernetes_provisioner import (
     KubernetesProvisioningError, deploy_spec_to_kind,
     get_kind_workload_status, list_kind_clusters,
 )
+from service_registry import (
+    DeploymentStatus, DuplicateServiceError, ServiceNotFoundError,
+    service_registry,
+)
 import httpx
 import uvicorn
 import os
@@ -71,6 +75,7 @@ templates = Jinja2Templates(directory="templates")
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup"""
+    service_registry.initialize()
     redis_url = os.getenv("REDIS_URL")  # Optional: redis://localhost:6379
     await initialize_session_manager(redis_url=redis_url, ttl_hours=24)
     get_connection_manager().start_heartbeat()
@@ -182,6 +187,23 @@ class KindDeployRequest(BaseModel):
     spec: InfrastructureSpec
     cluster_name: str
     approval_id: str
+    owner: str = Field(default="operator", max_length=128)
+
+
+class ServiceRegistrationRequest(BaseModel):
+    service_name: str
+    owner: str = Field(default="operator", max_length=128)
+    environment: Environment
+    replica_count: int = Field(ge=1, le=20)
+    deployment_status: DeploymentStatus = DeploymentStatus.PENDING
+    resource_references: List[str] = Field(default_factory=list)
+
+
+class ServiceUpdateRequest(BaseModel):
+    owner: Optional[str] = Field(default=None, max_length=128)
+    replica_count: Optional[int] = Field(default=None, ge=1, le=20)
+    deployment_status: Optional[DeploymentStatus] = None
+    resource_references: Optional[List[str]] = None
 
 
 @app.post("/api/governance/evaluate")
@@ -317,7 +339,25 @@ async def kubernetes_deploy(data: KindDeployRequest):
             },
         )
     try:
-        return deploy_spec_to_kind(data.spec, data.cluster_name)
+        result = deploy_spec_to_kind(data.spec, data.cluster_name)
+        references = _registry_resource_references(
+            result.get("namespace", ""),
+            result.get("deployments", []),
+            result.get("services", []),
+        )
+        result["registered_service"] = service_registry.upsert_service(
+            service_name=data.spec.service_name,
+            owner=data.owner,
+            environment=data.spec.environment,
+            replica_count=data.spec.replica_count,
+            deployment_status=(
+                DeploymentStatus.RUNNING
+                if result.get("success")
+                else DeploymentStatus.NOT_READY
+            ),
+            resource_references=references,
+        )
+        return result
     except KubernetesProvisioningError as e:
         raise HTTPException(status_code=e.status_code, detail=str(e))
 
@@ -330,9 +370,102 @@ async def kubernetes_status(
 ):
     """Return deployment, pod, and service status for a generated service."""
     try:
-        return get_kind_workload_status(cluster_name, service_name, environment.value)
+        status = get_kind_workload_status(
+            cluster_name, service_name, environment.value
+        )
+        registered = service_registry.get_service(service_name, environment)
+        if registered:
+            deployments = status["deployments"]
+            primary = next(
+                (deployment for deployment in deployments if deployment["name"] == service_name),
+                None,
+            )
+            changes = {
+                "deployment_status": (
+                    DeploymentStatus.RUNNING if status["ready"]
+                    else DeploymentStatus.NOT_READY
+                ),
+                "resource_references": _registry_resource_references(
+                    status["namespace"], deployments, status["services"]
+                ),
+            }
+            if primary:
+                changes["replica_count"] = primary["desired_replicas"]
+            service_registry.update_service(
+                service_name, environment, **changes
+            )
+        return status
     except KubernetesProvisioningError as e:
         raise HTTPException(status_code=e.status_code, detail=str(e))
+
+
+def _registry_resource_references(
+    namespace: str,
+    deployments: List[dict],
+    services: List[dict],
+) -> List[str]:
+    references = [f"namespace/{namespace}"] if namespace else []
+    references.extend(f"deployment/{item['name']}" for item in deployments)
+    references.extend(f"service/{item['name']}" for item in services)
+    return references
+
+
+@app.get("/api/services")
+async def list_registered_services():
+    return {"services": service_registry.list_services()}
+
+
+@app.post("/api/services", status_code=201)
+async def register_service(data: ServiceRegistrationRequest):
+    try:
+        return service_registry.create_service(
+            service_name=data.service_name,
+            owner=data.owner,
+            environment=data.environment,
+            replica_count=data.replica_count,
+            deployment_status=data.deployment_status,
+            resource_references=data.resource_references,
+        )
+    except DuplicateServiceError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+@app.get("/api/services/{environment}/{service_name}")
+async def get_registered_service(environment: Environment, service_name: str):
+    service = service_registry.get_service(service_name, environment)
+    if not service:
+        raise HTTPException(status_code=404, detail="Registered service not found.")
+    return service
+
+
+@app.patch("/api/services/{environment}/{service_name}")
+async def update_registered_service(
+    environment: Environment,
+    service_name: str,
+    data: ServiceUpdateRequest,
+):
+    try:
+        changes = data.model_dump(exclude_unset=True)
+        return service_registry.update_service(
+            service_name,
+            environment,
+            **changes,
+        )
+    except ServiceNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+@app.delete("/api/services/{environment}/{service_name}", status_code=204)
+async def delete_registered_service(environment: Environment, service_name: str):
+    try:
+        service_registry.delete_service(service_name, environment)
+        return Response(status_code=204)
+    except ServiceNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @app.get("/")

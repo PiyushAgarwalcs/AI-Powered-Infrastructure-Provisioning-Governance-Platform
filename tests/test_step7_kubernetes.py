@@ -14,6 +14,7 @@ from requirement_parser import (
     NetworkExposure,
     ServiceType,
 )
+from service_registry import DeploymentStatus, ServiceRegistry
 
 
 def run_sync(coro):
@@ -180,8 +181,11 @@ def test_rollout_failure_returns_workload_status_without_claiming_success(monkey
     assert result["pods"][0]["container_states"][0]["reason"] == "ImagePullBackOff"
 
 
-def test_status_endpoint_summarizes_local_workloads(monkeypatch):
+def test_status_endpoint_summarizes_and_updates_registered_workloads(monkeypatch, tmp_path):
     install_fake_tools(monkeypatch)
+    registry = ServiceRegistry(tmp_path / "registry.sqlite3")
+    registry.create_service("demo-api", "team", "development", 2)
+    monkeypatch.setattr(main, "service_registry", registry)
 
     result = run_sync(
         main.kubernetes_status(
@@ -193,6 +197,9 @@ def test_status_endpoint_summarizes_local_workloads(monkeypatch):
     assert result["deployments"][0]["name"] == "demo-api"
     assert result["pods"][0]["restart_count"] == 1
     assert result["services"][0]["type"] == "ClusterIP"
+    registered = registry.get_service("demo-api", "development")
+    assert registered["deployment_status"] == DeploymentStatus.RUNNING.value
+    assert "service/demo-api-service" in registered["resource_references"]
 
 
 def test_deploy_endpoint_requires_approved_governance(monkeypatch):
@@ -254,12 +261,15 @@ def test_deploy_endpoint_rechecks_mandatory_policies(monkeypatch):
     assert deploy_called is False
 
 
-def test_deploy_endpoint_invokes_kind_only_for_matching_approval(monkeypatch):
+def test_deploy_endpoint_registers_matching_approved_deployment(monkeypatch, tmp_path):
     request = main.KindDeployRequest(
         spec=demo_spec(),
         cluster_name="local",
         approval_id="approval-1",
+        owner="platform-team",
     )
+    registry = ServiceRegistry(tmp_path / "registry.sqlite3")
+    monkeypatch.setattr(main, "service_registry", registry)
     monkeypatch.setattr(
         main,
         "get_approval",
@@ -272,7 +282,13 @@ def test_deploy_endpoint_invokes_kind_only_for_matching_approval(monkeypatch):
             "governance": {"provisioning_allowed": True},
         },
     )
-    expected = {"success": True, "deployment_status": "ready"}
+    expected = {
+        "success": True,
+        "deployment_status": "ready",
+        "namespace": "demo-api-development",
+        "deployments": [{"name": "demo-api"}],
+        "services": [{"name": "demo-api-service"}],
+    }
     calls = []
 
     def fake_deploy(spec, cluster_name):
@@ -283,7 +299,16 @@ def test_deploy_endpoint_invokes_kind_only_for_matching_approval(monkeypatch):
 
     result = run_sync(main.kubernetes_deploy(request))
 
-    assert result == expected
+    assert result["success"] is True
+    registered = registry.get_service("demo-api", "development")
+    assert registered["owner"] == "platform-team"
+    assert registered["replica_count"] == 2
+    assert registered["deployment_status"] == DeploymentStatus.RUNNING.value
+    assert registered["resource_references"] == [
+        "namespace/demo-api-development",
+        "deployment/demo-api",
+        "service/demo-api-service",
+    ]
     assert calls == [(request.spec, "local")]
 
 
