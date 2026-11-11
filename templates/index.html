@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ShipSage  AI DevOps Dashboard</title>
+<title>AI-Powered Infrastructure Provisioning & Governance Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -63,7 +63,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 
 /* --- VIEW 1: LANDING / SETUP --- */
 #setup-view { position: fixed; inset: 0; background: var(--bg); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 40px 20px; transition: background-color 0.3s; }
-.setup-card { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 100%; max-width: 600px; box-shadow: var(--card-shadow); position: relative; overflow: hidden; transition: 0.3s; }
+.setup-card { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 100%; max-width: 780px; box-shadow: var(--card-shadow); position: relative; overflow: hidden; transition: 0.3s; }
 .setup-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--ibm), var(--accent)); }
 .setup-header { text-align: center; margin-bottom: 32px; }
 .setup-logo { font-size: 32px; margin-bottom: 16px; display: inline-block; background: var(--panel-hover); padding: 12px; border-radius: 16px; border: 1px solid var(--border); }
@@ -293,83 +293,162 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
   </div>
   <div class="setup-card">
     <div class="setup-header">
-      <div class="setup-logo"></div>
-      <h1>Ship<span>Sage</span></h1>
-      <p>AI DevOps Readiness & Pipeline Generator</p>
+      <div class="setup-logo">🏗️</div>
+      <h1>Infrastructure <span>Provisioning & Governance</span></h1>
+      <p>Natural-Language Infrastructure Generation, Blast Radius Analysis & OPA Governance</p>
     </div>
     
+    <!-- Natural Language Request Field -->
     <div class="input-group">
-      <label>GitHub Repository URL</label>
+      <label for="naturalLanguageRequest">Natural-Language Infrastructure Request</label>
       <div class="input-wrapper">
-        <input type="text" id="repoUrl" placeholder="https://github.com/owner/repository" autocomplete="off"/>
-      </div>
-    </div>
-    
-    <div class="input-group">
-      <label>GitHub Token (Optional - for private repos)</label>
-      <div class="input-wrapper">
-        <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off"/>
+        <textarea id="naturalLanguageRequest" rows="3" placeholder="e.g. Deploy a high-availability Python REST API with a PostgreSQL database, 3 replicas in production, exposed via Ingress with Prometheus monitoring" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; color: var(--text); font-size: 14px; font-family: inherit; resize: vertical; outline: none; transition: 0.2s;"></textarea>
       </div>
       <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
-        💡 Required for private repositories. <a href="https://github.com/settings/tokens" target="_blank" style="color: var(--primary);">Generate token</a> with 'repo' scope.
+        💡 State your infrastructure requirements in plain English, or configure parameters directly below.
       </div>
     </div>
     
-    <div class="input-group">
-      <label>AI Provider</label>
-      <select id="aiProvider" onchange="toggleAICredentials()" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;">
-        <option value="rule-based" selected>Rule-based (Free - no IBM billing needed)</option>
-        <option value="watsonx">IBM watsonx Granite (Enterprise)</option>
-        <option value="openai">OpenAI GPT-4 ($0.01/1k tokens)</option>
-        <option value="anthropic">Anthropic Claude ($0.003/1k tokens)</option>
-        <option value="ollama">Ollama (Local - Free)</option>
-      </select>
-    </div>
-    
-    <div class="input-group" id="watsonxCreds" style="display: none;">
-      <label>IBM watsonx Credentials</label>
-      <div class="optional-creds">
-        <input type="password" id="apiKey" placeholder="IBM Cloud API Key"/>
-        <input type="text" id="projectId" placeholder="watsonx Project ID"/>
+    <!-- Service Type & Environment Selection -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+      <div class="input-group" style="margin-bottom: 0;">
+        <label for="serviceType">Service Type</label>
+        <select id="serviceType" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;">
+          <option value="web-api" selected>Web API / Backend (FastAPI)</option>
+          <option value="frontend-spa">Frontend Web App (React)</option>
+          <option value="worker">Background Worker / Queue Consumer</option>
+          <option value="full-stack">Full-Stack Application</option>
+        </select>
+      </div>
+      <div class="input-group" style="margin-bottom: 0;">
+        <label for="environment">Environment</label>
+        <select id="environment" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;">
+          <option value="production" selected>Production</option>
+          <option value="staging">Staging</option>
+          <option value="development">Development</option>
+        </select>
       </div>
     </div>
     
-    <div class="input-group" id="openaiCreds" style="display: none;">
-      <label>OpenAI API Key</label>
-      <div class="input-wrapper">
-        <input type="password" id="openaiKey" placeholder="sk-..."/>
+    <!-- Replica Count, Database & Network Exposure Selection -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+      <div class="input-group" style="margin-bottom: 0;">
+        <label for="replicaCount">Replica Count</label>
+        <input type="number" id="replicaCount" min="1" max="10" value="3" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;"/>
+      </div>
+      <div class="input-group" style="margin-bottom: 0;">
+        <label for="databaseType">Database</label>
+        <select id="databaseType" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;">
+          <option value="postgres" selected>PostgreSQL</option>
+          <option value="mysql">MySQL</option>
+          <option value="mongodb">MongoDB</option>
+          <option value="redis">Redis Cache</option>
+          <option value="none">None (Stateless)</option>
+        </select>
+      </div>
+      <div class="input-group" style="margin-bottom: 0;">
+        <label for="networkExposure">Network Exposure</label>
+        <select id="networkExposure" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;">
+          <option value="load-balancer" selected>LoadBalancer / Ingress (Public)</option>
+          <option value="cluster-ip">ClusterIP (Internal Only)</option>
+          <option value="node-port">NodePort</option>
+        </select>
       </div>
     </div>
     
-    <div class="input-group" id="anthropicCreds" style="display: none;">
-      <label>Anthropic API Key</label>
-      <div class="input-wrapper">
-        <input type="password" id="anthropicKey" placeholder="sk-ant-..."/>
+    <!-- Service Name & Monitoring Preference -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+      <div class="input-group" style="margin-bottom: 0;">
+        <label for="serviceName">Service Name</label>
+        <input type="text" id="serviceName" value="payment-gateway-api" placeholder="e.g. payment-gateway-api" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;"/>
+      </div>
+      <div class="input-group" style="margin-bottom: 0;">
+        <label for="monitoringPreference">Monitoring Preference</label>
+        <select id="monitoringPreference" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;">
+          <option value="prometheus-grafana" selected>Prometheus & Grafana</option>
+          <option value="basic">Basic Health Endpoints</option>
+          <option value="none">None</option>
+        </select>
       </div>
     </div>
+
+    <!-- Error Display -->
+    <div id="setup-error" style="color: #ef4444; font-size: 13px; margin-bottom: 16px; display: none; text-align: center; background: rgba(239,68,68,0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3);"></div>
     
-    <div class="input-group" id="ollamaCreds" style="display: none;">
-      <label>Ollama Configuration</label>
-      <div class="optional-creds">
-        <input type="text" id="ollamaModel" placeholder="Model (llama3)" value="llama3"/>
-        <input type="text" id="ollamaEndpoint" placeholder="Endpoint" value="http://localhost:11434"/>
-      </div>
-      <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
-        💡 Requires Ollama running locally. <a href="https://ollama.ai" target="_blank" style="color: var(--primary);">Install Ollama</a>
-      </div>
-    </div>
-    
-    <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin: -8px 0 16px;">No IBM Cloud billing? Keep <b>Rule-based</b> selected. ShipSage will still analyze repos, answer questions from repo context, and generate DevOps assets.</div>
-    <div id="setup-error" style="color: var(--red); font-size: 13px; margin-bottom: 16px; display: none; text-align: center;"></div>
-    
-    <button class="btn-primary" id="analyzeBtn" onclick="analyze()">
-      Analyze DevOps Readiness
+    <!-- Primary Provisioning Button -->
+    <button class="btn-primary" id="provisionBtn" onclick="submitProvisionRequest()">
+      ⚡ Generate & Provision Infrastructure
     </button>
+    
+    <!-- Collapsible Advanced: Repository Analysis (Optional) -->
+    <details style="margin-top: 24px; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; background: rgba(255,255,255,0.01);">
+      <summary style="font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer;">🔍 Optional: Scan Existing GitHub Repository</summary>
+      <div style="margin-top: 16px;">
+        <div class="input-group">
+          <label>GitHub Repository URL</label>
+          <div class="input-wrapper">
+            <input type="text" id="repoUrl" placeholder="https://github.com/owner/repository" autocomplete="off"/>
+          </div>
+        </div>
+        
+        <div class="input-group">
+          <label>GitHub Token (Optional)</label>
+          <div class="input-wrapper">
+            <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off"/>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>AI Provider</label>
+          <select id="aiProvider" onchange="toggleAICredentials()" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;">
+            <option value="rule-based" selected>Rule-based (Free - offline)</option>
+            <option value="ollama">Ollama (Local LLM)</option>
+            <option value="openai">OpenAI GPT-4</option>
+            <option value="anthropic">Anthropic Claude</option>
+            <option value="watsonx">IBM watsonx</option>
+          </select>
+        </div>
+
+        <div class="input-group" id="ollamaCreds" style="display: none;">
+          <label>Ollama Configuration</label>
+          <div class="optional-creds">
+            <input type="text" id="ollamaModel" placeholder="Model (llama3)" value="llama3"/>
+            <input type="text" id="ollamaEndpoint" placeholder="Endpoint" value="http://localhost:11434"/>
+          </div>
+        </div>
+
+        <div class="input-group" id="watsonxCreds" style="display: none;">
+          <label>IBM watsonx Credentials</label>
+          <div class="optional-creds">
+            <input type="password" id="apiKey" placeholder="IBM Cloud API Key"/>
+            <input type="text" id="projectId" placeholder="watsonx Project ID"/>
+          </div>
+        </div>
+
+        <div class="input-group" id="openaiCreds" style="display: none;">
+          <label>OpenAI API Key</label>
+          <div class="input-wrapper">
+            <input type="password" id="openaiKey" placeholder="sk-..."/>
+          </div>
+        </div>
+
+        <div class="input-group" id="anthropicCreds" style="display: none;">
+          <label>Anthropic API Key</label>
+          <div class="input-wrapper">
+            <input type="password" id="anthropicKey" placeholder="sk-ant-..."/>
+          </div>
+        </div>
+
+        <button class="btn-outline" id="analyzeBtn" onclick="analyze()" style="width: 100%; margin-top: 10px; justify-content: center;">
+          Analyze Existing Repository
+        </button>
+      </div>
+    </details>
     
     <div class="loading-overlay" id="loading">
       <div class="spinner"></div>
-      <div class="loading-text">Analyzing Repository...</div>
-      <div class="loading-subtext" id="loadingStep">Cloning codebase into memory</div>
+      <div class="loading-text">Generating Infrastructure Plan...</div>
+      <div class="loading-subtext" id="loadingStep">Validating parameters & compiling Terraform & Kubernetes configurations...</div>
     </div>
   </div>
 </div>
@@ -378,7 +457,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
 <div id="dashboard-view">
   <aside class="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo"> Ship<span>Sage</span></div>
+      <div class="sidebar-logo">🏗️ Infra<span>Govern</span></div>
     </div>
     
     <div class="nav-menu">
@@ -439,6 +518,39 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-ser
     <div class="content-area">
       <!-- Overview View -->
       <div id="view-overview" class="view-panel active">
+        <!-- Active Infrastructure Specification Banner -->
+        <div class="card" id="infra-spec-card" style="margin-bottom: 24px; border-left: 4px solid var(--primary); background: linear-gradient(180deg, rgba(59,130,246,0.06) 0%, transparent 100%);">
+          <div class="card-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+            <span style="display: flex; align-items: center; gap: 8px;">📋 Active Infrastructure Specification</span>
+            <span class="badge" id="spec-env-badge" style="background: rgba(16,185,129,0.15); color: var(--success); border-color: rgba(16,185,129,0.3); font-size: 11px; font-weight: 700; text-transform: uppercase;">PRODUCTION</span>
+          </div>
+          <div style="font-size: 13px; color: var(--text); margin-bottom: 16px; font-style: italic; background: var(--bg); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); line-height: 1.5;" id="spec-request-text">
+            "Deploy a production-grade FastAPI service with PostgreSQL database, 3 replicas, Ingress exposure, and Prometheus metrics monitoring."
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
+            <div style="background: var(--bg); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Service Type</div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px;" id="spec-service-type">Web API (FastAPI)</div>
+            </div>
+            <div style="background: var(--bg); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Replicas</div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px;" id="spec-replicas">3</div>
+            </div>
+            <div style="background: var(--bg); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Database</div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px;" id="spec-database">PostgreSQL</div>
+            </div>
+            <div style="background: var(--bg); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Exposure</div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px;" id="spec-exposure">LoadBalancer / Ingress</div>
+            </div>
+            <div style="background: var(--bg); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Monitoring</div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px;" id="spec-monitoring">Prometheus & Grafana</div>
+            </div>
+          </div>
+        </div>
+
         <div class="metrics-grid">
           <div class="metric-card">
             <div class="metric-title">Files Analyzed</div>
@@ -869,6 +981,91 @@ function stopLoading() {
   document.getElementById('loading').style.display = 'none';
 }
 
+const PROVISION_STEPS = [
+  "Validating infrastructure parameters...",
+  "Synthesizing container configuration...",
+  "Generating Kubernetes Deployment & Service manifests...",
+  "Compiling Terraform AWS infrastructure...",
+  "Configuring observability & metrics exporters...",
+  "Assembling deployment blueprint..."
+];
+
+async function submitProvisionRequest() {
+  const naturalLanguageRequest = document.getElementById('naturalLanguageRequest').value.trim();
+  const serviceType = document.getElementById('serviceType').value;
+  const environment = document.getElementById('environment').value;
+  const replicaCount = parseInt(document.getElementById('replicaCount').value, 10) || 3;
+  const databaseType = document.getElementById('databaseType').value;
+  const networkExposure = document.getElementById('networkExposure').value;
+  const monitoringPreference = document.getElementById('monitoringPreference').value;
+  const serviceName = document.getElementById('serviceName').value.trim() || 'payment-gateway-api';
+  const errorEl = document.getElementById('setup-error');
+
+  errorEl.style.display = 'none';
+  const loading = document.getElementById('loading');
+  loading.style.display = 'flex';
+  document.querySelector('.loading-text').textContent = 'Generating Infrastructure Plan...';
+  
+  let stepIdx = 0;
+  document.getElementById('loadingStep').textContent = PROVISION_STEPS[0];
+  const stepTimer = setInterval(() => {
+    stepIdx = (stepIdx + 1) % PROVISION_STEPS.length;
+    document.getElementById('loadingStep').textContent = PROVISION_STEPS[stepIdx];
+  }, 1200);
+
+  if (!localStorage.getItem('infra_owner_id')) {
+    const ownerId = 'user_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('infra_owner_id', ownerId);
+  }
+  const currentOwnerId = localStorage.getItem('infra_owner_id');
+
+  const payload = {
+    natural_language_request: naturalLanguageRequest,
+    service_type: serviceType,
+    environment: environment,
+    replica_count: replicaCount,
+    database: databaseType,
+    network_exposure: networkExposure,
+    monitoring: monitoringPreference,
+    service_name: serviceName,
+    owner_id: currentOwnerId
+  };
+
+  try {
+    const r = await fetch('/api/provision/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Provisioning failed');
+
+    globalData = d;
+    renderDashboard(d);
+
+    // Transition to dashboard view
+    document.getElementById('setup-view').style.display = 'none';
+    document.getElementById('dashboard-view').style.display = 'flex';
+
+    // Init charts
+    initCharts(d);
+
+    if (d.session_id) {
+      currentSessionId = d.session_id;
+      initCollaboration(d.session_id);
+    }
+
+    saveToLocalHistory(d);
+    renderProjectHistory();
+  } catch (err) {
+    errorEl.textContent = err.message || 'An error occurred while generating infrastructure plan.';
+    errorEl.style.display = 'block';
+  } finally {
+    clearInterval(stepTimer);
+    loading.style.display = 'none';
+  }
+}
+
 async function analyze() {
   const url = document.getElementById('repoUrl').value.trim();
   const githubToken = document.getElementById('githubToken').value.trim();
@@ -1139,16 +1336,48 @@ function clearProjectHistory() {
 }
 
 function renderDashboard(d) {
+  // Active Infrastructure Specification
+  const specCard = document.getElementById('infra-spec-card');
+  if (d.provision_spec) {
+    if (specCard) specCard.style.display = 'block';
+    const spec = d.provision_spec;
+    const envBadge = document.getElementById('spec-env-badge');
+    if (envBadge) envBadge.textContent = (spec.environment || 'PRODUCTION').toUpperCase();
+    const reqText = document.getElementById('spec-request-text');
+    if (reqText) reqText.textContent = spec.natural_language_request ? `"${spec.natural_language_request}"` : `Configured specification for ${spec.service_name || 'service'}`;
+    const sType = document.getElementById('spec-service-type');
+    if (sType) sType.textContent = spec.service_type || 'Web API';
+    const rep = document.getElementById('spec-replicas');
+    if (rep) rep.textContent = spec.replica_count || '3';
+    const db = document.getElementById('spec-database');
+    if (db) db.textContent = (spec.database || 'None').toUpperCase();
+    const exp = document.getElementById('spec-exposure');
+    if (exp) exp.textContent = spec.network_exposure || 'ClusterIP';
+    const mon = document.getElementById('spec-monitoring');
+    if (mon) mon.textContent = spec.monitoring || 'None';
+  } else if (specCard) {
+    specCard.style.display = 'none';
+  }
+
   // Topbar
-  document.getElementById('topbar-repo').textContent = d.repo;
-  document.getElementById('topbar-repo').href = `https://github.com/${d.repo}`;
+  const topbarRepo = document.getElementById('topbar-repo');
+  if (d.provision_spec) {
+    topbarRepo.textContent = d.provision_spec.service_name || d.repo;
+    topbarRepo.href = '#';
+  } else {
+    topbarRepo.textContent = d.repo;
+    topbarRepo.href = `https://github.com/${d.repo}`;
+  }
   document.getElementById('topbar-branch').textContent = d.branch;
   document.getElementById('topbar-stack').textContent = d.project_type || 'Project';
   
   const aiBadge = document.getElementById('topbar-ai');
-  if (d.ai_powered) {
+  if (d.provision_spec) {
     aiBadge.className = 'badge watsonx';
-    aiBadge.textContent = ' IBM watsonx Active';
+    aiBadge.textContent = d.provision_spec.natural_language_request ? '⚡ AI-Assisted Request' : '🛠️ Infrastructure Blueprint';
+  } else if (d.ai_powered) {
+    aiBadge.className = 'badge watsonx';
+    aiBadge.textContent = ' AI Active';
   } else {
     aiBadge.className = 'badge';
     aiBadge.style.background = 'rgba(245,158,11,0.1)';
@@ -1465,7 +1694,8 @@ async function downloadAllFiles() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `shipsage-${globalData.repo.replace('/', '-')}.zip`;
+    const repoSlug = (globalData.repo || 'export').replace(/\//g, '-');
+    a.download = `infraspec-${repoSlug}.zip`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

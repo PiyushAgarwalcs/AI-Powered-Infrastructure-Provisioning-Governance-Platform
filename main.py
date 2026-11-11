@@ -32,7 +32,10 @@ import os
 import uuid
 import random
 
-app = FastAPI(title="ShipSage", description="AI DevOps Pipeline Generator — powered by IBM watsonx")
+app = FastAPI(
+    title="AI-Powered Infrastructure Provisioning & Governance Platform",
+    description="Natural-language infrastructure provisioning, Terraform/Kubernetes generation, blast radius calculation, and OPA governance."
+)
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -46,7 +49,7 @@ async def startup_event():
     redis_url = os.getenv("REDIS_URL")  # Optional: redis://localhost:6379
     await initialize_session_manager(redis_url=redis_url, ttl_hours=24)
     get_connection_manager().start_heartbeat()
-    print("[OK] ShipSage services initialized")
+    print("[OK] Infrastructure Provisioning & Governance Platform initialized")
 
 
 @app.on_event("shutdown")
@@ -54,7 +57,7 @@ async def shutdown_event():
     """Cleanup on shutdown"""
     await close_session_manager()
     get_connection_manager().stop_heartbeat()
-    print("[OK] ShipSage services closed")
+    print("[OK] Infrastructure Provisioning & Governance Platform closed")
 
 
 # Helper function to generate user colors
@@ -65,6 +68,18 @@ def generate_user_color() -> str:
         "#F7DC6F", "#BB8FCE", "#85C1E2", "#F8B739", "#52B788"
     ]
     return random.choice(colors)
+
+
+class InfrastructureRequest(BaseModel):
+    natural_language_request: str = ""
+    service_type: str = "web-api"  # web-api, frontend-spa, worker, full-stack
+    environment: str = "production"  # development, staging, production
+    replica_count: int = 2
+    database: str = "postgres"  # none, postgres, mysql, mongodb, redis
+    network_exposure: str = "load-balancer"  # cluster-ip, node-port, load-balancer
+    monitoring: str = "prometheus-grafana"  # prometheus-grafana, basic, none
+    service_name: str = "api-service"
+    owner_id: str = ""
 
 
 class AnalyzeRequest(BaseModel):
@@ -103,6 +118,146 @@ async def get_config_usage(config_type: str):
     if config_type not in CONFIG_USAGE:
         raise HTTPException(status_code=404, detail="Config type not found")
     return CONFIG_USAGE[config_type]
+
+
+@app.post("/api/provision/request")
+async def provision_request(data: InfrastructureRequest):
+    """
+    Handle structured infrastructure provisioning request from the UI.
+    Connects the natural-language request and selections to the generator pipeline.
+    """
+    try:
+        # Map selections to stack & project type
+        stack_items = []
+        if data.service_type == "web-api":
+            stack_items.extend(["Python", "FastAPI"])
+            ptype = "FastAPI"
+        elif data.service_type == "frontend-spa":
+            stack_items.extend(["JavaScript", "React", "Node.js"])
+            ptype = "React"
+        elif data.service_type == "worker":
+            stack_items.extend(["Python", "Worker"])
+            ptype = "Worker"
+        else:
+            stack_items.extend(["Python", "FastAPI", "React"])
+            ptype = "FullStack"
+
+        if data.database == "postgres":
+            stack_items.append("PostgreSQL")
+        elif data.database == "mysql":
+            stack_items.append("MySQL")
+        elif data.database == "mongodb":
+            stack_items.append("MongoDB")
+        elif data.database == "redis":
+            stack_items.append("Redis")
+
+        if data.monitoring == "prometheus-grafana":
+            stack_items.append("Prometheus")
+
+        files = ["main.py", "requirements.txt", "Dockerfile", "README.md"]
+        if data.database != "none":
+            files.append("database.py")
+
+        # Generate starter configs
+        configs = {
+            "dockerfile": gen_dockerfile(stack_items, ptype, files),
+            "compose": gen_compose(stack_items, files),
+            "kubernetes": gen_kubernetes(stack_items, ptype),
+            "cicd": gen_cicd(stack_items, files),
+            "aws_terraform": gen_aws_terraform(stack_items, files),
+            "monitoring": gen_monitoring(stack_items),
+            "env_config": gen_env_and_nginx(stack_items, files),
+        }
+
+        service_name = data.service_name.strip() if data.service_name else "infra-service"
+        analysis = {
+            "repo": f"{data.environment}/{service_name}",
+            "branch": data.environment,
+            "total_files": len(files),
+            "analyzed_files": len(files),
+            "stack": stack_items,
+            "project_type": ptype,
+            "ai_powered": bool(data.natural_language_request),
+            "readiness": {
+                "score": 90 if data.monitoring == "prometheus-grafana" else 75,
+                "signals": {
+                    "docker": True,
+                    "infra": True,
+                    "ci": True,
+                    "monitoring": data.monitoring == "prometheus-grafana",
+                    "env_template": True,
+                    "docs": True,
+                    "security": True,
+                    "tests": True,
+                    "health": True,
+                    "secrets": True
+                }
+            },
+            "provision_spec": {
+                "natural_language_request": data.natural_language_request,
+                "service_name": service_name,
+                "service_type": data.service_type,
+                "environment": data.environment,
+                "replica_count": data.replica_count,
+                "database": data.database,
+                "network_exposure": data.network_exposure,
+                "monitoring": data.monitoring
+            }
+        }
+
+        # Cost estimate & optimizations
+        analysis_with_configs = {**analysis, **configs}
+        cost_estimate = estimate_cost_from_analysis(analysis_with_configs)
+        cost_optimizations = generate_enhanced_optimizations(
+            cost_estimate=cost_estimate,
+            readiness_score=analysis["readiness"]["score"],
+            stack=stack_items
+        )
+
+        executive_summary = generate_executive_summary(analysis)
+        deployment_roadmap = generate_deployment_roadmap(
+            readiness_score=analysis["readiness"]["score"],
+            project_type=ptype,
+            stack=stack_items,
+            signals=analysis["readiness"]["signals"]
+        )
+
+        visualizations = {
+            "technology_radar": generate_technology_radar(stack_items, analysis["readiness"]),
+            "confidence_meter": generate_confidence_meter(analysis["readiness"]["score"]),
+            "timeline_chart": generate_deployment_timeline_chart(deployment_roadmap),
+            "cost_breakdown": generate_cost_breakdown_chart(cost_estimate),
+            "savings_potential": generate_savings_potential_chart(cost_optimizations),
+            "progress_indicators": generate_progress_indicators(analysis["readiness"])
+        }
+
+        security_dashboard = generate_security_dashboard(analysis, stack_items, configs)
+
+        session_manager = get_session_manager()
+        user_id = data.owner_id if data.owner_id else str(uuid.uuid4())
+        session = await session_manager.create_session(
+            repo_url=f"infra://{data.environment}/{service_name}",
+            owner_id=user_id,
+            analysis_data=analysis,
+            configs=configs,
+            is_public=False
+        )
+
+        return {
+            **analysis,
+            **configs,
+            "cost_estimate": cost_estimate,
+            "cost_optimizations": cost_optimizations,
+            "executive_summary": executive_summary,
+            "deployment_roadmap": deployment_roadmap,
+            "visualizations": visualizations,
+            "security_dashboard": security_dashboard,
+            "session_id": session.id,
+            "share_token": session.share_token,
+            "share_url": f"/session/{session.id}?token={session.share_token}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/analyze")
@@ -567,7 +722,7 @@ async def export_configs(data: dict):
         
         zip_buffer = create_export_zip(analysis_data, configs)
         repo_name = analysis_data['repo'].replace('/', '-')
-        filename = f"shipsage-{repo_name}.zip"
+        filename = f"infraspec-{repo_name}.zip"
         
         return StreamingResponse(
             zip_buffer,
@@ -832,7 +987,11 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "ShipSage", "engine": "IBM watsonx Granite"}
+    return {
+        "status": "ok",
+        "service": "AI-Powered Infrastructure Provisioning & Governance Platform",
+        "version": "1.0.0"
+    }
 
 
 if __name__ == "__main__":
