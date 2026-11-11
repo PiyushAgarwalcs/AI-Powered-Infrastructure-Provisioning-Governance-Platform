@@ -430,17 +430,17 @@ input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px s
         <div class="input-group" style="margin-bottom: 0;">
           <label for="networkExposure">Network access</label>
           <select id="networkExposure" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text);">
-            <option value="load-balancer" selected>Public (LoadBalancer / Ingress)</option>
-            <option value="cluster-ip">Internal only (ClusterIP)</option>
+            <option value="load-balancer" selected>Public access</option>
+            <option value="cluster-ip">Internal only</option>
             <option value="node-port">NodePort</option>
           </select>
-          <span class="field-help">Controls how clients can reach the service.</span>
+          <span class="field-help">Public uses LoadBalancer / Ingress; ClusterIP stays internal.</span>
         </div>
       </div>
       <div class="form-grid two-col">
         <div class="input-group" style="margin-bottom: 0;">
           <label for="serviceName">Service name</label>
-          <input type="text" id="serviceName" value="payment-gateway-api" placeholder="e.g. payment-gateway-api" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text);"/>
+          <input type="text" id="serviceName" value="sample-api" placeholder="e.g. orders-api" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text);"/>
           <span class="field-help">Used to name generated resources.</span>
         </div>
         <div class="input-group" style="margin-bottom: 0;">
@@ -1225,7 +1225,7 @@ async function submitProvisionRequest() {
   const databaseType = document.getElementById('databaseType').value;
   const networkExposure = document.getElementById('networkExposure').value;
   const monitoringPreference = document.getElementById('monitoringPreference').value;
-  const serviceName = document.getElementById('serviceName').value.trim() || 'payment-gateway-api';
+  const serviceName = document.getElementById('serviceName').value.trim() || 'sample-api';
   const errorEl = document.getElementById('setup-error');
 
   errorEl.style.display = 'none';

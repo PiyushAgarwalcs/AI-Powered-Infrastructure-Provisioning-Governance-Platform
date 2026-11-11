@@ -2,7 +2,7 @@
 
 Turn a natural-language infrastructure request into a validated specification, reviewable Terraform and Kubernetes configuration, and a policy-governed local deployment workflow.
 
-![Infrastructure request dashboard](docs/screenshots/dashboard.png)
+![Redesigned infrastructure request workflow](docs/screenshots/dashboard.png)
 
 > **Safety notice:** This project is a development prototype, not a production provisioning system. Terraform analysis does not apply plans or create cloud resources. Kubernetes deployment is a separate, explicit action limited to a validated local Kind cluster. Run the application only on a trusted local machine.
 
@@ -16,7 +16,7 @@ Turn a natural-language infrastructure request into a validated specification, r
 - **Provision locally:** Deploy generated Kubernetes manifests only to a validated Kind cluster after approval.
 - **Track services:** Keep service and deployment records in a local SQLite registry.
 
-The dashboard's **Generate & Provision Infrastructure** action generates and reviews artifacts; it does not provision infrastructure. Local Kubernetes deployment is a separate workflow.
+The dashboard's **Generate configuration** action creates files for review; it does not provision infrastructure. Policy evaluation and local Kubernetes deployment are separate workflows.
 
 ## Technology stack
 
@@ -128,7 +128,3 @@ Start at the [documentation index](docs/README.md) for all project guides.
 - Kind deployment requires Docker, Kind, `kubectl`, an existing local cluster, and the generated application image loaded into that cluster.
 - Generated configuration is a starting point, not production-ready infrastructure. Review it and apply your organization's security controls before use.
 - Live Kind provisioning has not been verified in the development environment; automated tests mock external commands.
-
-## Attribution and license
-
-This project grew from the ShipSage/RepoSage codebase and retains repository-analysis and generator components from [AbhishekKharat04/repo-sage](https://github.com/AbhishekKharat04/repo-sage). This checkout does not include a `LICENSE` file. Consult the upstream repository's terms before redistributing or reusing its work.
