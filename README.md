@@ -1,92 +1,86 @@
-# ShipSage
+# AI-Powered Infrastructure Provisioning & Governance Platform
 
-> From GitHub repo to reviewed DevOps starter kit in minutes.
+Turn an infrastructure request into a validated specification, generated configuration, a reviewable Terraform plan analysis, and a governed local Kubernetes deployment workflow.
 
-ShipSage is an AI-assisted DevOps readiness and pipeline generator for teams that need to understand whether a repository is ready for production deployment. Paste a public GitHub repository URL and ShipSage analyzes the stack, scores production readiness, flags blockers, and generates Docker, Kubernetes, CI/CD, Terraform, monitoring, and environment configuration files.
+![Infrastructure request dashboard](docs/screenshots/dashboard.png)
 
-Built for the IBM Bob Hackathon 2026. Powered by IBM watsonx Granite when credentials are provided, with a smart rule-based fallback so the demo still works without API keys.
+## What it does
 
-## The Problem
+- Parses natural-language requirements with a local Ollama model or deterministic rules, then validates the result with Pydantic.
+- Generates Terraform, Kubernetes, Dockerfile, and Compose configurations from the specification.
+- Validates generated configuration and analyzes Terraform plans, resource changes, dependencies, and blast radius.
+- Evaluates deterministic governance rules and records explicit human approval or rejection.
+- Deploys generated Kubernetes manifests only to a validated local Kind cluster after approval.
+- Tracks services and deployment status in a local SQLite registry.
 
-Small teams often delay deployment because every new repository needs the same painful checklist: container setup, CI/CD, secrets, infrastructure, health checks, monitoring, and cloud configuration. Copy-pasting templates is fast, but risky. One-click deploy promises are attractive, but teams still need to know what is missing before trusting generated infrastructure.
+Terraform plan analysis never runs `terraform apply`. The UI's **Generate & Provision Infrastructure** action generates and reviews artifacts; it does not provision infrastructure. The separate Kubernetes deployment endpoint is restricted to local Kind contexts and requires an approved record.
 
-ShipSage helps answer the practical question: "What do I need before this repo can safely move toward production?"
+## Architecture
 
-## What ShipSage Does
+See [the architecture and workflow guide](docs/architecture.md) for the component diagram, API flow, and implementation boundaries.
 
-1. Analyzes a public GitHub repository.
-2. Detects language, framework, project type, key files, and repo structure.
-3. Scores DevOps readiness using production signals such as tests, CI/CD, Docker, docs, env templates, health checks, and infrastructure code.
-4. Shows deployment blockers and next actions.
-5. Generates a reviewed starter kit for common deployment assets.
+## Windows quick start
 
-## Generated Assets
+Requirements: Python 3.10 or later and PowerShell.
 
-| Output | Purpose |
-| --- | --- |
-| Dockerfile | Multi-stage app container scaffold |
-| docker-compose.yml | Local app and detected service orchestration |
-| Kubernetes manifests | Deployment, service, ingress, config, secrets, and HPA |
-| GitHub Actions pipeline | Build, test, push image, and deploy workflow |
-| AWS Terraform | VPC, ECR, EKS, S3, and database scaffolding |
-| Monitoring stack | Prometheus, Grafana, Elasticsearch, Logstash, and Kibana |
-| Env and Nginx config | Environment template and reverse proxy starter |
-
-## Why This Is Useful
-
-ShipSage is not a blind one-click deployment button. It is a DevOps copilot that gives teams a starting point and tells them what still needs review. That makes it useful for:
-
-- Developers shipping side projects or MVPs
-- Student teams preparing hackathon demos
-- Startups standardizing deployment basics
-- DevOps learners who want to understand production building blocks
-- Engineering teams onboarding a new repo
-
-## Tech Stack
-
-| Layer | Technology |
-| --- | --- |
-| Backend | Python, FastAPI |
-| Frontend | Vanilla HTML, CSS, JavaScript |
-| AI Engine | IBM watsonx Granite with rule-based fallback |
-| Repo Analysis | GitHub REST API |
-| Generated Targets | Docker, Kubernetes, GitHub Actions, AWS Terraform, ELK, Nginx |
-
-## Getting Started
-
-```bash
-git clone https://github.com/AbhishekKharat04/repo-sage.git
-cd repo-sage
-pip install -r requirements.txt
+```powershell
+git clone https://github.com/PiyushAgarwalcs/AI-Powered-Infrastructure-Provisioning-Governance-Platform.git
+Set-Location 'AI-Powered-Infrastructure-Provisioning-Governance-Platform'
+py -3.10 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 python main.py
 ```
 
-Open `http://localhost:8000` and paste a public GitHub repository URL.
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). No API key, cloud account, Redis server, Terraform, or Kind cluster is required to use the request form, rule-based parser, generators, and mock plan analysis.
 
-## IBM watsonx Credentials
+For detailed Windows setup, local Ollama, Terraform, Kind, and safety instructions, read [SETUP.md](SETUP.md).
 
-IBM credentials are optional. If you provide an IBM Cloud API key and watsonx Project ID, ShipSage uses Granite for deeper analysis. Without credentials, it still detects stack signals and generates the readiness report using deterministic rules.
+## Local development and tests
 
-## Hackathon Notes
-
-- IBM Bob IDE is the required hackathon component. Export the Bob IDE task session report before submission and place it in `bob_sessions/`.
-- IBM watsonx is optional. If you do not have hackathon IBM Cloud access, keep the app on **Rule-based** mode and the core demo still works without billing setup.
-- Do not commit IBM Cloud API keys or watsonx credentials. Use environment variables or local-only secrets instead.
-- See `HACKATHON_SUBMISSION_CHECKLIST.md` and `DATA_SOURCES.md` before final submission.
-
-## Project Structure
-
-```text
-repo-sage/
-  main.py              FastAPI server and API routes
-  analyzer.py          GitHub repo analyzer, stack detection, readiness scoring
-  generators.py        Docker, Kubernetes, CI/CD, Terraform, monitoring generators
-  templates/index.html SaaS-style dashboard UI
-  requirements.txt
-  FEATURES.md
-  SETUP.md
+```powershell
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
 ```
 
-## Positioning
+See [TESTING_GUIDE.md](TESTING_GUIDE.md) for focused checks and integration-test boundaries.
 
-Existing tools can generate infrastructure snippets. ShipSage focuses on the missing product layer: explaining whether the repo is ready, what is risky, what was generated, and what the user should do next.
+## API
+
+FastAPI's interactive API reference is available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) while the app is running. The main workflow endpoints are:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/infrastructure/parse` | Parse a request using Ollama or rule-based extraction |
+| `POST` | `/api/infrastructure/generate` | Generate and validate files from an infrastructure specification |
+| `POST` | `/api/infrastructure/download` | Download generated files as a ZIP |
+| `POST` | `/api/provision/request` | Generate the dashboard's artifact bundle from form selections; does not provision |
+| `POST` | `/api/terraform/analyze` | Analyze generated HCL with a mock plan by default, or the optional Terraform CLI |
+| `POST` | `/api/terraform/blast-radius` | Analyze a supplied Terraform plan JSON document |
+| `POST` | `/api/governance/evaluate` | Evaluate policies and create a pending approval record |
+| `POST` | `/api/governance/approve` / `/api/governance/reject` | Record an explicit approval decision |
+| `GET` | `/api/governance/approval/{approval_id}` | Retrieve an approval record |
+| `GET` | `/api/kubernetes/clusters` | List local Kind clusters |
+| `POST` | `/api/kubernetes/deploy` | Deploy a matching approved specification to a local Kind cluster |
+| `GET` | `/api/kubernetes/status` | Read workload status from a local Kind cluster |
+| `GET`, `POST` | `/api/services` | List or register services |
+| `GET`, `PATCH`, `DELETE` | `/api/services/{environment}/{service_name}` | Read, update, or remove a registered service |
+| `GET` | `/health` | Application health check |
+
+## Technology
+
+Python, FastAPI, Pydantic, Ollama (optional/local), deterministic Python policy checks, Terraform CLI (optional), Kubernetes/Kind (optional/local), SQLite, and a vanilla HTML/CSS/JavaScript dashboard.
+
+## Safety and limitations
+
+- The governance rules are implemented in Python; an OPA binary or Rego policy bundle is **not** integrated.
+- Approval records are held in process memory and disappear when the server restarts. The app has no user authentication or authorization. Run it only on a trusted local machine; do not expose it to an untrusted network.
+- Terraform analysis does not apply plans or create cloud resources. CLI planning can still contact Terraform providers and should only be used with configuration and credentials you trust.
+- Kind deployment requires Docker, Kind, kubectl, an existing local cluster, and the generated application image loaded into that cluster.
+- Generated configuration is a starting point, not production-ready infrastructure. Review it, replace example credentials, and apply your organization's security controls before use.
+- Live Kind provisioning has not been verified in the development environment; its automated tests mock external commands.
+
+## Attribution and license
+
+This project grew from the ShipSage/RepoSage codebase and retains its repository-analysis and generator components: [AbhishekKharat04/repo-sage](https://github.com/AbhishekKharat04/repo-sage). No `LICENSE` file is present in this checkout; consult the upstream repository's terms before redistributing or reusing its work.

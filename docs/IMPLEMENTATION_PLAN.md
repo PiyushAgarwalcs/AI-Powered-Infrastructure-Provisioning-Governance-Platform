@@ -1,131 +1,47 @@
-# AI-Powered Infrastructure Provisioning & Governance Platform
-## Implementation & Architecture Plan
+# Implementation status and architecture notes
 
-**Version:** 1.0.0-draft  
-**Date:** November 2026  
-**Status:** Step 1 Completed (Repository Audit & Architecture Definition)
+## Project objective
 
----
+Transform the ShipSage starter code into a local-first infrastructure provisioning and governance workflow: turn infrastructure requirements into a validated specification, generate reviewable configuration, analyze Terraform plans, evaluate deterministic policy rules, require explicit approval, and optionally deploy to a local Kind cluster.
 
-## 1. Executive Summary & Objective
+## Actual architecture
 
-This project transforms the existing **ShipSage** repository into an **AI-Powered Infrastructure Provisioning & Governance Platform**.
+- **API and UI:** FastAPI application in `main.py`; vanilla HTML, CSS, and JavaScript in `templates/index.html`.
+- **Specification parsing:** Pydantic `InfrastructureSpec` and a parser that supports local Ollama plus a deterministic rule-based fallback (`requirement_parser.py`, `ai_providers.py`).
+- **Generation:** Terraform, Kubernetes, Dockerfile, and Compose templates in `generators.py`, checked by `config_validator.py`.
+- **Plan analysis:** `terraform_runner.py` parses Terraform plan data and computes a deterministic blast-radius score. CLI mode is optional; the default is mock analysis.
+- **Governance:** `governance.py` evaluates deterministic Python rules and manages in-memory approval records. There is no OPA/Rego runtime in this checkout.
+- **Local deployment:** `kubernetes_provisioner.py` validates generated manifests and local Kind API context before invoking bounded `kubectl` operations. It requires an approved record and matching validated specification.
+- **Service registry:** `service_registry.py` persists registered services to SQLite. Its database is local and ignored by Git.
+- **Retained modules:** Repository analysis, cost estimation, collaboration, and related features remain available from the original application; they are outside the core provisioning flow.
 
-The platform is designed to:
-1. Convert natural-language infrastructure requirements into validated, structured specifications using local LLMs (Ollama) and strict Pydantic schemas.
-2. Generate production-ready Terraform and Kubernetes configurations without paid APIs or cloud dependencies.
-3. Perform deterministic Terraform plan analysis and blast-radius calculation.
-4. Enforce strict Open Policy Agent (OPA) / Rego governance policies (e.g. replica limits, exposure controls, forbidden resource destructions).
-5. Require explicit, human-in-the-loop approval before any action is permitted.
-6. Support controlled local deployment to a Kubernetes cluster (Kind).
-7. Maintain an Infrastructure Service Registry tracking provisioned services, configurations, and lifecycle statuses.
+See [architecture.md](architecture.md) for the workflow diagram, API sequence, and safety boundaries.
 
----
+## Delivered implementation
 
-## 2. Repository Audit & Baseline Architecture
+| Step | Scope | Status |
+| --- | --- | --- |
+| 1 | Repository audit and implementation plan | Complete |
+| 2 | Product rebranding and infrastructure request interface | Complete |
+| 3 | AI/rule-based requirement parsing and Pydantic validation | Complete |
+| 4 | Specification-driven Terraform, Kubernetes, Docker, and Compose generation | Complete |
+| 5 | Terraform plan parsing and blast-radius analysis | Complete |
+| 6 | Deterministic governance checks and human approval controls | Complete |
+| 7 | Controlled deployment to local Kind clusters | Complete |
+| 8 | SQLite infrastructure service registry | Complete |
+| 9 | Parser resilience and end-to-end workflow tests | Complete |
+| 10 | User, setup, architecture, and testing documentation | Complete |
 
-### 2.1 Backend Architecture
-- **Framework:** FastAPI (`main.py`) running on Python 3.10+.
-- **WebSockets & Real-time:** `websocket_manager.py` provides real-time state synchronization, user presence, and cursor sharing.
-- **Session & Storage:** `session_manager.py` with in-memory storage and optional Redis support.
-- **AI Integrations:** `ai_providers.py` supports Watsonx, OpenAI, Anthropic, and local Ollama, with a rule-based fallback mechanism.
+## Safety and operational limits
 
-### 2.2 Generators & Templates
-- `generators.py` contains template generation routines:
-  - `gen_dockerfile()`: Generates multi-stage Dockerfiles for Python, Node, Go, Java.
-  - `gen_compose()`: Generates `docker-compose.yml` for local multi-container development.
-  - `gen_kubernetes()`: Generates Kubernetes Deployments, Services, ConfigMaps, Secrets, Ingress, and HPA.
-  - `gen_aws_terraform()`: Generates AWS Terraform code (VPC, Subnets, EKS, RDS, ECR, S3).
-  - `gen_monitoring()`: Generates Prometheus & Grafana monitoring configurations.
-  - `gen_env_and_nginx()`: Generates environment templates and Nginx reverse proxy configurations.
+- Model output is parsed as data; it is not executed as a command.
+- Terraform analysis does not run `terraform apply`. CLI mode uses an isolated temporary directory and runs only formatting, initialization without a backend, validation, planning, and plan display.
+- Kubernetes deployment targets only a Kind context whose API endpoint is loopback. The target image must already exist in the cluster.
+- Policy checks are deterministic Python rules, not OPA/Rego evaluation. A policy failure blocks approval.
+- Approval state is process-local; a server restart clears it. The API has no user authentication or authorization and should remain on a trusted local machine.
+- Generated manifests and IaC require review and replacement of example credentials before real use.
+- Live Kind provisioning was not available in the development environment; the external command paths are covered by mocked tests.
 
-### 2.3 Analysis, Cost & Security Modules
-- `analyzer.py`: GitHub repository structural analysis and heuristic readiness scoring.
-- `cost_estimator.py` & `cost_optimizer.py`: AWS pricing heuristics and cost optimization suggestions.
-- `security_compliance.py`: Scans generated configurations against security benchmarks (CIS, OWASP, SOC2).
-- `visualizations.py`: Generates SVG technology radars, confidence meters, and cost charts.
-- `exporter.py`: Bundles generated infrastructure artifacts into zip archives.
+## Repository, attribution, and license
 
-### 2.4 Frontend Layer
-- `templates/index.html`: Responsive single-page application built with modern dark/light CSS, Tailwind-inspired utility classes, Highlight.js for code previews, and Chart.js.
-- `templates/collaboration.js`: Client-side WebSocket client for real-time interaction.
-
----
-
-## 3. Reusable Components & Transition Strategy
-
-| Component | Current Role | Target Platform Role | Action |
-| :--- | :--- | :--- | :--- |
-| `main.py` | FastAPI entry point & API routes | Main API server for provisioning & governance workflows | **Reuse & Extend** |
-| `templates/index.html` | ShipSage repo analysis dashboard | Infrastructure request, plan review, governance & approval UI | **Rebrand & Enhance (Step 2)** |
-| `ai_providers.py` | Multi-LLM provider client | Ollama requirement extraction client | **Reuse & Adapt (Step 3)** |
-| `generators.py` | Repo-to-code generators | Spec-to-Terraform & Spec-to-Kubernetes generators | **Refactor to consume Pydantic specs (Step 4)** |
-| `cost_estimator.py` | AWS cost heuristics | Infrastructure cost estimation preview | **Preserve** |
-| `security_compliance.py` | Heuristic security compliance scanner | Secondary security insights alongside OPA | **Preserve & Complement** |
-| `session_manager.py` | In-memory session tracking | Base for request tracking & service registry | **Reuse (Step 8)** |
-| Legacy hackathon files | Hackathon submission notes (`bob_sessions/`, `PHASE*.md`) | Not relevant to the new platform | **Removed in Step 1** |
-
----
-
-## 4. Setup Problems & Baseline Issues Identified
-
-1. **Python Syntax Incompatibility in `generators.py`**:
-   - *Problem:* Line 298 contained nested backslashes (`\n`) inside an f-string expression: `{"..." if lang == "python" else ...}`. This violates Python syntax rules prior to Python 3.12 (PEP 701) and caused immediate `SyntaxError` on Python 3.10.
-   - *Resolution:* Extracted configuration dictionaries outside of the f-string in `generators.py`. All Python modules now compile cleanly under Python 3.10+.
-2. **Missing Automated Test Suite**:
-   - *Problem:* The original repository contained testing guides (`TESTING_GUIDE.md`) but zero automated unit or integration tests (`pytest` collected 0 items).
-   - *Resolution:* Automated unit tests will be systematically introduced starting in Step 3 (spec models and mocked parser) through Step 9.
-3. **Repository Licensing**:
-   - *Audit finding:* No upstream `LICENSE` file was present in the repository root. A standard open-source license (MIT) is recommended.
-4. **Git & Security Configuration**:
-   - *Problem:* Default `.gitignore` lacked comprehensive exclusions for Terraform states, plan binaries, and local databases.
-   - *Resolution:* `.gitignore` updated to strictly exclude `.env*`, `*.tfstate*`, `*.tfplan`, `*.plan`, `.terraform/`, `*.db`, `*.sqlite`, and secret keys.
-
----
-
-## 5. Step-by-Step Execution Plan
-
-```
-Step 1: Audit, baseline fix, git configuration, and implementation plan [DONE]
-Step 2: Rebranding UI and infrastructure request interface [DONE]
-Step 3: AI natural-language requirement parser with Ollama & Pydantic validation [DONE]
-Step 4: Spec-driven Terraform & Kubernetes manifest generator
-Step 5: Terraform plan execution, JSON extraction, and blast-radius calculation
-Step 6: OPA/Rego governance policies and cryptographic approval workflow
-Step 7: Local Kubernetes provisioning on Kind
-Step 8: SQLite-backed Infrastructure Service Registry
-Step 9: Comprehensive test suite (unit, integration, error paths)
-Step 10: Platform documentation, architecture diagrams, and v1.0.0 release
-```
-
----
-
-## 6. Safety & Security Guarantees
-
-- **No Blind Shell Execution:** No model-generated shell commands are ever passed directly to a system shell.
-- **Zero Cost Dependencies:** Works entirely with free, local tooling (Ollama, Terraform CLI, Kind, OPA, SQLite).
-- **Mandatory Human-in-the-Loop:** Terraform plans and Kubernetes deployments require explicit user authorization before execution.
-- **Tamper-Proof Plans:** Applied plans are cryptographically verified against the plan approved during the governance phase.
-
----
-
-## 7. Implementation Progress Tracker
-
-- [x] **Step 1: Repository audit and setup** (Completed: `d886e09`)
-- [x] **Step 2: Rebranding and infrastructure request interface** (Completed: `476e540`)
-- [x] **Step 3: AI infrastructure requirement parser** (Completed: `8e0fb48`)
-- [x] **Step 4: Infrastructure configuration generation** (Completed)
-  - Spec-driven generators for Terraform, Kubernetes manifests, Dockerfile, and Compose (`generators.py`).
-  - Python API + PostgreSQL first-class support (AWS RDS Terraform + local embedded k8s/compose).
-  - Multi-document Kubernetes generator with Namespace, ConfigMap, Secret, Deployment, Service, and HPA.
-  - Configuration validators (`config_validator.py`) for YAML, HCL bracket balance, and Dockerfile syntax.
-  - Export and download endpoints (`/api/infrastructure/download`, `/api/infrastructure/generate`).
-  - Full automated test suite in `tests/test_step4_generation.py` (26 total passing tests across Steps 2, 3, and 4).
-- [ ] **Step 5: Terraform plan and blast-radius analysis**
-- [ ] **Step 6: OPA governance and human approval**
-- [ ] **Step 7: Local Kubernetes provisioning**
-- [ ] **Step 8: Infrastructure service registry**
-- [ ] **Step 9: Testing and reliability improvements**
-- [ ] **Step 10: Documentation and final release**
-
-
+This checkout retains code from the ShipSage/RepoSage project at [AbhishekKharat04/repo-sage](https://github.com/AbhishekKharat04/repo-sage). No `LICENSE` file is present in this checkout. Refer to upstream licensing terms before redistributing or reusing upstream work.
