@@ -61,7 +61,10 @@ class InfrastructureSpec(BaseModel):
     def validate_service_name(cls, v: str) -> str:
         cleaned = re.sub(r"[^a-z0-9\-]", "-", v.lower().strip())
         cleaned = re.sub(r"-+", "-", cleaned).strip("-")
-        return cleaned or "infra-service"
+        cleaned = cleaned or "infra-service"
+        if len(cleaned) > 63:
+            raise ValueError("Service name must be at most 63 characters")
+        return cleaned
 
 
 class ParseResult(BaseModel):
@@ -225,8 +228,12 @@ def validate_and_build_spec(data: Dict[str, Any], raw_request: str, parser_used:
     if raw_st:
         try:
             service_type = ServiceType(raw_st)
-        except ValueError:
+        except (ValueError, TypeError):
             invalid_fields.append("service_type")
+            service_type = ServiceType.WEB_API
+            clarifications.append(
+                "The requested service type is unsupported; defaulting to Web API."
+            )
     else:
         missing_fields.append("service_type")
         clarifications.append("Service type was not specified; defaulting to Web API (FastAPI).")
@@ -238,8 +245,12 @@ def validate_and_build_spec(data: Dict[str, Any], raw_request: str, parser_used:
     if raw_env:
         try:
             environment = Environment(raw_env)
-        except ValueError:
+        except (ValueError, TypeError):
             invalid_fields.append("environment")
+            environment = Environment.PRODUCTION
+            clarifications.append(
+                "The requested environment is unsupported; defaulting to production."
+            )
     else:
         missing_fields.append("environment")
         clarifications.append("Target environment was not specified; defaulting to Production.")
@@ -259,6 +270,9 @@ def validate_and_build_spec(data: Dict[str, Any], raw_request: str, parser_used:
                 replica_count = max(1, min(20, val))
         except (ValueError, TypeError):
             invalid_fields.append("replica_count")
+            clarifications.append(
+                "The replica count is invalid; please provide a number from 1 to 20."
+            )
     else:
         replica_count = 3 if environment == Environment.PRODUCTION else 1
 
@@ -272,8 +286,11 @@ def validate_and_build_spec(data: Dict[str, Any], raw_request: str, parser_used:
     if raw_db:
         try:
             database = DatabaseType(raw_db)
-        except ValueError:
+        except (ValueError, TypeError):
             invalid_fields.append("database")
+            clarifications.append(
+                "The requested database is unsupported; defaulting to none."
+            )
     else:
         # If web-api or full-stack, default to postgres; worker to redis
         if service_type in [ServiceType.WEB_API, ServiceType.FULL_STACK]:
@@ -287,8 +304,11 @@ def validate_and_build_spec(data: Dict[str, Any], raw_request: str, parser_used:
     if raw_exp:
         try:
             network_exposure = NetworkExposure(raw_exp)
-        except ValueError:
+        except (ValueError, TypeError):
             invalid_fields.append("network_exposure")
+            clarifications.append(
+                "The requested network exposure is unsupported; defaulting to cluster-internal."
+            )
     else:
         if service_type in [ServiceType.WEB_API, ServiceType.FRONTEND_SPA, ServiceType.FULL_STACK]:
             network_exposure = NetworkExposure.LOAD_BALANCER
@@ -305,12 +325,35 @@ def validate_and_build_spec(data: Dict[str, Any], raw_request: str, parser_used:
     if raw_mon:
         try:
             monitoring = MonitoringPreference(raw_mon)
-        except ValueError:
+        except (ValueError, TypeError):
             invalid_fields.append("monitoring")
+            clarifications.append(
+                "The requested monitoring option is unsupported; defaulting to Prometheus and Grafana."
+            )
     else:
         monitoring = MonitoringPreference.PROMETHEUS_GRAFANA if environment == Environment.PRODUCTION else MonitoringPreference.BASIC
 
-    service_name = data.get("service_name") or "infra-service"
+    raw_service_name = data.get("service_name")
+    if raw_service_name is None or raw_service_name == "":
+        service_name = "infra-service"
+    elif isinstance(raw_service_name, str):
+        cleaned_name = re.sub(
+            r"-+", "-", re.sub(r"[^a-z0-9\-]", "-", raw_service_name.lower().strip())
+        ).strip("-")
+        if len(cleaned_name) > 63:
+            invalid_fields.append("service_name")
+            clarifications.append(
+                "The service name is too long; use at most 63 DNS-compatible characters."
+            )
+            service_name = "infra-service"
+        else:
+            service_name = raw_service_name
+    else:
+        invalid_fields.append("service_name")
+        clarifications.append(
+            "The service name is invalid; please provide a text identifier."
+        )
+        service_name = "infra-service"
 
     # Confidence calculation
     confidence = 1.0
