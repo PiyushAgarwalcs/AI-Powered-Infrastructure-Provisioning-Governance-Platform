@@ -5,16 +5,16 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 
-import kubernetes_provisioner as provisioner
+import infra_platform.infrastructure.kubernetes_provisioner as provisioner
 import main
-from governance import infrastructure_spec_hash
-from requirement_parser import (
+from infra_platform.infrastructure.governance import infrastructure_spec_hash
+from infra_platform.infrastructure.requirement_parser import (
     Environment,
     InfrastructureSpec,
     NetworkExposure,
     ServiceType,
 )
-from service_registry import DeploymentStatus, ServiceRegistry
+from infra_platform.infrastructure.service_registry import DeploymentStatus, ServiceRegistry
 
 
 def run_sync(coro):

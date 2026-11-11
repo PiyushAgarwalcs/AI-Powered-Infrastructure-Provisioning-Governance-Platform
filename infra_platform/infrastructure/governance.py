@@ -17,7 +17,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from pydantic import ValidationError
-from requirement_parser import InfrastructureSpec
+from infra_platform.infrastructure.requirement_parser import InfrastructureSpec
 
 
 # ── Enumerations ──────────────────────────────────────────────────────────────

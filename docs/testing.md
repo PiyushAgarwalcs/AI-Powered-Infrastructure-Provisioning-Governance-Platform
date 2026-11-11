@@ -22,12 +22,13 @@ python -m pytest -q
 Run an individual workflow area:
 
 ```powershell
-python -m pytest -q tests/test_step3_parser.py tests/test_step9_workflow.py
-python -m pytest -q tests/test_step4_generation.py
-python -m pytest -q tests/test_step5_blast_radius.py
-python -m pytest -q tests/test_step6_governance.py
-python -m pytest -q tests/test_step7_kubernetes.py
-python -m pytest -q tests/test_step8_service_registry.py
+python -m pytest -q tests/test_requirement_parser.py tests/test_infrastructure_workflow.py
+python -m pytest -q tests/test_infrastructure_interface.py
+python -m pytest -q tests/test_configuration_generation.py
+python -m pytest -q tests/test_terraform_analysis.py
+python -m pytest -q tests/test_governance.py
+python -m pytest -q tests/test_kubernetes_provisioner.py
+python -m pytest -q tests/test_service_registry.py
 ```
 
 Tests use mocked LLM responses and mocked Terraform/Kubernetes commands where external tools or services would otherwise be needed. They verify parser validation and fallback, generated files, plan parsing and blast radius, governance decisions and stale-plan rejection, local Kind safety checks, registry operations, and a request-to-approval workflow. The suite does not prove a live cloud or Kind deployment works.

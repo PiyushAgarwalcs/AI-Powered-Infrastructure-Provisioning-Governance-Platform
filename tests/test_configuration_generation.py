@@ -1,22 +1,21 @@
 """
-Step 4 Unit & Integration Tests: Infrastructure Configuration Generation
-Tests spec-driven generation of Terraform, Kubernetes, Docker, and Compose,
-alongside syntax and schema validators, download functionality, and API endpoints.
+Tests specification-driven configuration generation and validators for
+Terraform, Kubernetes, Docker, Compose, downloads, and API endpoints.
 """
 import io
 import zipfile
 import pytest
 
-from requirement_parser import (
+from infra_platform.infrastructure.requirement_parser import (
     InfrastructureSpec, ServiceType, Environment, DatabaseType,
     NetworkExposure, MonitoringPreference
 )
-from generators import (
+from infra_platform.infrastructure.generators import (
     generate_terraform_for_spec, generate_kubernetes_for_spec,
     generate_dockerfile_for_spec, generate_compose_for_spec,
     generate_all_spec_configurations
 )
-from config_validator import (
+from infra_platform.infrastructure.config_validator import (
     validate_kubernetes_manifests, validate_terraform_code,
     validate_dockerfile_syntax, validate_compose_syntax,
     validate_all_spec_configurations

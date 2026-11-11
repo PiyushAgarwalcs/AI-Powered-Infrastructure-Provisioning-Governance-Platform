@@ -807,7 +807,7 @@ CMD ["app"]"""
 # Spec-Driven Configuration Generators (Step 4)
 # ══════════════════════════════════════════════════════════════════════════════
 from typing import Dict, Any, Union
-from requirement_parser import (
+from infra_platform.infrastructure.requirement_parser import (
     InfrastructureSpec, ServiceType, Environment,
     DatabaseType, NetworkExposure, MonitoringPreference
 )

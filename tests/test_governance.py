@@ -1,10 +1,9 @@
 """
-Step 6 Tests: Infrastructure Governance & Approval Workflow
-Covers: policy evaluation, approval/reject lifecycle, stale-plan detection,
-        MANDATORY block logic, and API endpoint handlers.
+Governance tests for policy evaluation, approval/rejection lifecycle,
+stale-plan detection, mandatory blocks, and API handlers.
 """
 import pytest
-from governance import (
+from infra_platform.infrastructure.governance import (
     evaluate_policies, submit_for_approval, approve_plan, reject_plan,
     get_approval, governance_report_to_dict,
     PolicyResult, PolicySeverity, ApprovalStatus,

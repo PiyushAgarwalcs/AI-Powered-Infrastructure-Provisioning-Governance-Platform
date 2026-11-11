@@ -35,7 +35,7 @@ python main.py
 
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000). No API key, cloud account, Redis server, Terraform, or Kind cluster is required to use the request form, rule-based parser, generators, and mock plan analysis.
 
-For detailed Windows setup, local Ollama, Terraform, Kind, and safety instructions, read [SETUP.md](SETUP.md).
+For detailed Windows setup, local Ollama, Terraform, Kind, and safety instructions, read the [setup guide](docs/setup.md).
 
 ## Local development and tests
 
@@ -44,7 +44,24 @@ python -m pip install -r requirements-dev.txt
 python -m pytest -q
 ```
 
-See [TESTING_GUIDE.md](TESTING_GUIDE.md) for focused checks and integration-test boundaries.
+See the [testing guide](docs/testing.md) for focused checks and integration-test boundaries.
+
+## Project layout
+
+```text
+infra_platform/
+  ai/              Model provider adapters
+  analysis/        Repository analysis, costs, reporting, and exports
+  collaboration/   Sessions, comments, and WebSocket coordination
+  infrastructure/  Specs, generators, validation, plans, governance, Kind, registry
+templates/         Dashboard HTML and browser-side code
+tests/             Automated tests by workflow area
+docs/              Setup, testing, architecture, and historical project notes
+monitoring/         Monitoring configuration
+main.py             FastAPI application and local entry point
+```
+
+See the [documentation index](docs/README.md) for the guide map and the [architecture guide](docs/architecture.md) for module responsibilities.
 
 ## API
 

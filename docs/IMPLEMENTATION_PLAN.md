@@ -6,14 +6,14 @@ Transform the ShipSage starter code into a local-first infrastructure provisioni
 
 ## Actual architecture
 
-- **API and UI:** FastAPI application in `main.py`; vanilla HTML, CSS, and JavaScript in `templates/index.html`.
-- **Specification parsing:** Pydantic `InfrastructureSpec` and a parser that supports local Ollama plus a deterministic rule-based fallback (`requirement_parser.py`, `ai_providers.py`).
-- **Generation:** Terraform, Kubernetes, Dockerfile, and Compose templates in `generators.py`, checked by `config_validator.py`.
-- **Plan analysis:** `terraform_runner.py` parses Terraform plan data and computes a deterministic blast-radius score. CLI mode is optional; the default is mock analysis.
-- **Governance:** `governance.py` evaluates deterministic Python rules and manages in-memory approval records. There is no OPA/Rego runtime in this checkout.
-- **Local deployment:** `kubernetes_provisioner.py` validates generated manifests and local Kind API context before invoking bounded `kubectl` operations. It requires an approved record and matching validated specification.
-- **Service registry:** `service_registry.py` persists registered services to SQLite. Its database is local and ignored by Git.
-- **Retained modules:** Repository analysis, cost estimation, collaboration, and related features remain available from the original application; they are outside the core provisioning flow.
+- **API and UI:** FastAPI application and entry point in `main.py`; vanilla HTML, CSS, and JavaScript in `templates/index.html`.
+- **Specification parsing:** Pydantic `InfrastructureSpec` and a parser that supports local Ollama plus a deterministic rule-based fallback (`infra_platform/infrastructure/requirement_parser.py`, `infra_platform/ai/providers.py`).
+- **Generation:** Terraform, Kubernetes, Dockerfile, and Compose templates in `infra_platform/infrastructure/generators.py`, checked by `config_validator.py`.
+- **Plan analysis:** `infra_platform/infrastructure/terraform_runner.py` parses Terraform plan data and computes a deterministic blast-radius score. CLI mode is optional; the default is mock analysis.
+- **Governance:** `infra_platform/infrastructure/governance.py` evaluates deterministic Python rules and manages in-memory approval records. There is no OPA/Rego runtime in this checkout.
+- **Local deployment:** `infra_platform/infrastructure/kubernetes_provisioner.py` validates generated manifests and local Kind API context before invoking bounded `kubectl` operations. It requires an approved record and matching validated specification.
+- **Service registry:** `infra_platform/infrastructure/service_registry.py` persists registered services to SQLite. Its database is local and ignored by Git.
+- **Analysis and collaboration:** `infra_platform/analysis/` contains repository analysis, cost, reporting, and export helpers; `infra_platform/collaboration/` contains sessions, comments, and WebSocket coordination.
 
 See [architecture.md](architecture.md) for the workflow diagram, API sequence, and safety boundaries.
 

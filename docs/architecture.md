@@ -50,10 +50,12 @@ The dashboard's **Generate & Provision Infrastructure** button generates an arti
 | Area | Files |
 | --- | --- |
 | API, startup, dashboard routes | `main.py`, `templates/index.html` |
-| Parsing and specification | `requirement_parser.py`, `ai_providers.py` |
-| Configuration generation and validation | `generators.py`, `config_validator.py` |
-| Terraform plan and blast-radius analysis | `terraform_runner.py` |
-| Governance and approval records | `governance.py` |
-| Local Kubernetes deployment and status | `kubernetes_provisioner.py` |
-| Service registry | `service_registry.py` |
+| Parsing and specification | `infra_platform/infrastructure/requirement_parser.py`, `infra_platform/ai/providers.py` |
+| Configuration generation and validation | `infra_platform/infrastructure/generators.py`, `infra_platform/infrastructure/config_validator.py` |
+| Terraform plan and blast-radius analysis | `infra_platform/infrastructure/terraform_runner.py` |
+| Governance and approval records | `infra_platform/infrastructure/governance.py` |
+| Local Kubernetes deployment and status | `infra_platform/infrastructure/kubernetes_provisioner.py` |
+| Service registry | `infra_platform/infrastructure/service_registry.py` |
+| Analysis and reporting | `infra_platform/analysis/` |
+| Collaboration | `infra_platform/collaboration/` |
 | Automated tests | `tests/` |

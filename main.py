@@ -3,55 +3,56 @@ from fastapi.responses import StreamingResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from pathlib import Path
 from typing import List, Optional
-from analyzer import RepoAnalyzer
-from generators import (
+from infra_platform.analysis.analyzer import RepoAnalyzer
+from infra_platform.infrastructure.generators import (
     gen_dockerfile, gen_compose, gen_kubernetes,
     gen_cicd, gen_aws_terraform, gen_monitoring, gen_env_and_nginx,
     generate_all_spec_configurations, generate_terraform_for_spec,
     generate_kubernetes_for_spec, generate_dockerfile_for_spec,
     generate_compose_for_spec
 )
-from config_validator import (
+from infra_platform.infrastructure.config_validator import (
     validate_all_spec_configurations, validate_kubernetes_manifests,
     validate_terraform_code, validate_dockerfile_syntax
 )
-from exporter import create_export_zip
-from ai_providers import AIProviderFactory
-from cost_estimator import estimate_cost_from_analysis
-from cost_optimizer import generate_enhanced_optimizations
-from session_manager import (
+from infra_platform.analysis.exporter import create_export_zip
+from infra_platform.ai.providers import AIProviderFactory
+from infra_platform.analysis.cost_estimator import estimate_cost_from_analysis
+from infra_platform.analysis.cost_optimizer import generate_enhanced_optimizations
+from infra_platform.collaboration.session_manager import (
     initialize_session_manager, close_session_manager, get_session_manager
 )
-from websocket_manager import get_connection_manager, MessageType
-from comment_system import get_comment_manager
-from config_usage_guide import CONFIG_USAGE, get_usage_html
-from executive_dashboard import generate_executive_summary
-from roadmap_generator import generate_deployment_roadmap
-from visualizations import (
+from infra_platform.collaboration.websocket_manager import get_connection_manager, MessageType
+from infra_platform.collaboration.comment_system import get_comment_manager
+from infra_platform.analysis.config_usage_guide import CONFIG_USAGE, get_usage_html
+from infra_platform.analysis.executive_dashboard import generate_executive_summary
+from infra_platform.analysis.roadmap_generator import generate_deployment_roadmap
+from infra_platform.analysis.visualizations import (
     generate_technology_radar, generate_confidence_meter,
     generate_deployment_timeline_chart, generate_cost_breakdown_chart,
     generate_savings_potential_chart, generate_progress_indicators
 )
-from security_compliance import generate_security_dashboard
-from requirement_parser import (
+from infra_platform.analysis.security_compliance import generate_security_dashboard
+from infra_platform.infrastructure.requirement_parser import (
     parse_infrastructure_requirements, ParseResult, InfrastructureSpec,
     ServiceType, Environment, DatabaseType, NetworkExposure, MonitoringPreference
 )
-from terraform_runner import (
+from infra_platform.infrastructure.terraform_runner import (
     run_terraform_plan_analysis, parse_plan_json, calculate_blast_radius,
     blast_radius_to_dict, execution_result_to_dict,
 )
-from governance import (
+from infra_platform.infrastructure.governance import (
     evaluate_policies, submit_for_approval, approve_plan, reject_plan,
     get_approval, governance_report_to_dict, canonicalize_infrastructure_spec,
     infrastructure_spec_hash,
 )
-from kubernetes_provisioner import (
+from infra_platform.infrastructure.kubernetes_provisioner import (
     KubernetesProvisioningError, deploy_spec_to_kind,
     get_kind_workload_status, list_kind_clusters,
 )
-from service_registry import (
+from infra_platform.infrastructure.service_registry import (
     DeploymentStatus, DuplicateServiceError, ServiceNotFoundError,
     service_registry,
 )
@@ -63,12 +64,17 @@ import random
 
 app = FastAPI(
     title="AI-Powered Infrastructure Provisioning & Governance Platform",
-    description="Natural-language infrastructure provisioning, Terraform/Kubernetes generation, blast radius calculation, and OPA governance."
+    description=(
+        "Natural-language infrastructure provisioning, Terraform/Kubernetes "
+        "generation, blast radius analysis, and deterministic policy governance."
+    )
 )
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(
+    directory=str(Path(__file__).resolve().parent / "templates")
+)
 
 
 # Startup and shutdown events

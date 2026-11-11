@@ -3,7 +3,7 @@ import base64
 import re
 import time
 from typing import Optional
-from ai_providers import AIProviderFactory, AIProvider
+from infra_platform.ai.providers import AIProviderFactory, AIProvider
 
 # Files/folders to skip during analysis
 SKIP_EXTENSIONS = {

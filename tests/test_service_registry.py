@@ -2,8 +2,8 @@ import pytest
 from fastapi import HTTPException
 
 import main
-from requirement_parser import Environment
-from service_registry import (
+from infra_platform.infrastructure.requirement_parser import Environment
+from infra_platform.infrastructure.service_registry import (
     DeploymentStatus,
     DuplicateServiceError,
     ServiceNotFoundError,

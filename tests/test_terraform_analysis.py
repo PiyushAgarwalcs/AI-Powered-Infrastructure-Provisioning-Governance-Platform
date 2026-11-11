@@ -1,6 +1,5 @@
 """
-Step 5 Unit Tests: Terraform Plan Parsing & Blast-Radius Analysis
-Tests cover:
+Terraform plan parsing and blast-radius tests cover:
   - Plan JSON parsing from realistic and synthetic fixtures
   - Resource change classification (action, category, is_destructive)
   - Dependency edge extraction (explicit + implicit)
@@ -15,7 +14,7 @@ import json
 import hashlib
 import pytest
 
-from terraform_runner import (
+from infra_platform.infrastructure.terraform_runner import (
     ChangeAction, BlastLevel, ResourceCategory,
     ResourceChange, DependencyEdge, BlastRadiusResult,
     TerraformExecutionResult,
@@ -27,11 +26,11 @@ from terraform_runner import (
     _SAFE_TERRAFORM_COMMANDS, _run_terraform_command,
 )
 from main import analyze_terraform_plan, get_blast_radius_for_spec
-from requirement_parser import (
+from infra_platform.infrastructure.requirement_parser import (
     InfrastructureSpec, ServiceType, Environment,
     DatabaseType, NetworkExposure, MonitoringPreference
 )
-from generators import generate_terraform_for_spec
+from infra_platform.infrastructure.generators import generate_terraform_for_spec
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

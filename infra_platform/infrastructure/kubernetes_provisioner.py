@@ -9,9 +9,9 @@ from urllib.parse import urlparse
 
 import yaml
 
-from config_validator import validate_kubernetes_manifests
-from generators import generate_kubernetes_for_spec
-from requirement_parser import InfrastructureSpec
+from infra_platform.infrastructure.config_validator import validate_kubernetes_manifests
+from infra_platform.infrastructure.generators import generate_kubernetes_for_spec
+from infra_platform.infrastructure.requirement_parser import InfrastructureSpec
 
 
 _CLUSTER_NAME = re.compile(r"[a-z0-9](?:[a-z0-9.-]{0,61}[a-z0-9])?")

@@ -1,11 +1,10 @@
 """
-Step 3 Unit & Integration Tests: AI Infrastructure Requirement Parser
-Tests Pydantic models, JSON extraction, mocked model responses, semantic validation,
-missing field detection, clarifications, and API endpoint integration.
+Requirement parser tests for Pydantic models, JSON extraction, mocked model
+responses, semantic validation, clarifications, and API integration.
 """
 import json
 from unittest.mock import MagicMock
-from requirement_parser import (
+from infra_platform.infrastructure.requirement_parser import (
     ServiceType, Environment, DatabaseType, NetworkExposure, MonitoringPreference,
     InfrastructureSpec, ParseResult, extract_json_from_text, build_llm_prompt,
     rule_based_parse, validate_and_build_spec, parse_infrastructure_requirements

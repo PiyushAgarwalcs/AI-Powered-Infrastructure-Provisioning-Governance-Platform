@@ -1,10 +1,8 @@
-"""
-Step 2 Integration Tests: Product Rebranding & Infrastructure Request Interface
-"""
+"""Integration tests for the infrastructure request interface."""
 import pytest
 import os
 from main import app, InfrastructureRequest
-from generators import (
+from infra_platform.infrastructure.generators import (
     gen_dockerfile, gen_compose, gen_kubernetes,
     gen_cicd, gen_aws_terraform, gen_monitoring, gen_env_and_nginx
 )

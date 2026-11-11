@@ -3,8 +3,8 @@ import json
 from fastapi.testclient import TestClient
 
 import main
-from requirement_parser import validate_and_build_spec
-from terraform_runner import build_mock_plan_json
+from infra_platform.infrastructure.requirement_parser import validate_and_build_spec
+from infra_platform.infrastructure.terraform_runner import build_mock_plan_json
 
 
 class MockProvider:

@@ -8,7 +8,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Union
 
-from requirement_parser import Environment, InfrastructureSpec
+from infra_platform.infrastructure.requirement_parser import Environment, InfrastructureSpec
 
 
 class DeploymentStatus(str, Enum):
@@ -34,7 +34,7 @@ class ServiceRegistry:
         configured_path = db_path or os.getenv("INFRASTRUCTURE_REGISTRY_DB")
         self.db_path = str(
             configured_path
-            or Path(__file__).resolve().with_name("infrastructure_registry.sqlite3")
+            or Path(__file__).resolve().parents[2] / "infrastructure_registry.sqlite3"
         )
 
     @contextmanager
