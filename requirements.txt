@@ -1,0 +1,20 @@
+# Core dependencies
+fastapi
+uvicorn[standard]
+httpx
+jinja2
+python-multipart
+pydantic
+
+# Phase 2: AI Providers
+openai>=1.0.0
+anthropic>=0.18.0
+
+# Phase 2: AWS Cost Estimation
+boto3>=1.34.0
+
+# Phase 3: Real-time Collaboration
+redis>=5.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+websockets>=12.0

@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ShipSage  AI DevOps Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="/templates/collaboration.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+:root {
+  --bg: #030712;
+  --panel: #111827;
+  --panel-hover: #1f2937;
+  --border: #1f2937;
+  --border-glow: rgba(59, 130, 246, 0.3);
+  --text: #f9fafb;
+  --text-muted: #9ca3af;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --accent: #8b5cf6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --ibm: #0f62fe;
+  --radius: 12px;
+  --sidebar-w: 260px;
+  --card-shadow: none;
+  --editor-bg: #0d1117;
+  --editor-header: #161b22;
+}
+
+[data-theme="light"] {
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --panel-hover: #f9fafb;
+  --border: #e5e7eb;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --editor-bg: #1f2937;
+  --editor-header: #111827;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; transition: background-color 0.3s, color 0.3s; }
+::selection { background: var(--primary); color: #fff; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Background effects */
+.bg-glow { position: fixed; top: -20%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(15,98,254,0.1) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+.bg-glow-2 { position: fixed; bottom: -20%; right: -10%; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+
+/* Utilities */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.hidden { display: none !important; }
+
+/* --- VIEW 1: LANDING / SETUP --- */
+#setup-view { position: fixed; inset: 0; background: var(--bg); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 40px 20px; transition: background-color 0.3s; }
+.setup-card { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 100%; max-width: 600px; box-shadow: var(--card-shadow); position: relative; overflow: hidden; transition: 0.3s; }
+.setup-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--ibm), var(--accent)); }
+.setup-header { text-align: center; margin-bottom: 32px; }
+.setup-logo { font-size: 32px; margin-bottom: 16px; display: inline-block; background: var(--panel-hover); padding: 12px; border-radius: 16px; border: 1px solid var(--border); }
+.setup-header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+.setup-header h1 span { background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.setup-header p { color: var(--text-muted); font-size: 15px; }
+
+.input-group { margin-bottom: 24px; }
+.input-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.input-wrapper { position: relative; }
+.input-wrapper input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; color: var(--text); font-size: 15px; font-family: inherit; transition: 0.2s; outline: none; }
+.input-wrapper input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--border-glow); }
+.optional-creds { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.optional-creds input { padding: 12px 16px; font-size: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); outline: none; }
+.optional-creds input:focus { border-color: var(--primary); }
+
+.btn-primary { width: 100%; background: linear-gradient(135deg, var(--ibm), var(--accent)); color: white; border: none; padding: 16px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(15,98,254,0.4); }
+.btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+.loading-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 20px; color: #fff;}
+.spinner { width: 50px; height: 50px; border: 3px solid #374151; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.loading-subtext { color: #9ca3af; font-size: 14px; }
+
+/* --- VIEW 2: DASHBOARD --- */
+#dashboard-view { flex: 1; display: none; width: 100%; z-index: 1; }
+
+/* Sidebar */
+.sidebar { width: var(--sidebar-w); background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: 0.3s; }
+.sidebar-header { height: 70px; display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--border); }
+.sidebar-logo { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
+.sidebar-logo span { background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.nav-menu { padding: 20px 12px; flex: 1; overflow-y: auto; }
+.nav-section { font-size: 11px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; margin: 0 12px 8px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 4px; cursor: pointer; transition: 0.2s; }
+.nav-item:hover { background: var(--panel-hover); color: var(--text); }
+.nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
+.nav-item i { font-style: normal; font-size: 16px; width: 20px; text-align: center; }
+.sidebar-footer { padding: 20px; border-top: 1px solid var(--border); }
+.user-profile { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--ibm), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white;}
+.user-info div:first-child { font-size: 14px; font-weight: 600; color: var(--text); }
+.user-info div:last-child { font-size: 12px; color: var(--text-muted); }
+
+/* Main Content */
+.main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 70px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; background: var(--panel); backdrop-filter: blur(12px); z-index: 10; transition: 0.3s; }
+.repo-info { display: flex; align-items: center; gap: 16px; }
+.repo-name { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.repo-name a { color: var(--text); text-decoration: none; }
+.repo-name a:hover { color: var(--primary); }
+.badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; background: var(--bg); border: 1px solid var(--border); }
+.badge.watsonx { background: rgba(15,98,254,0.1); border-color: rgba(15,98,254,0.3); color: var(--ibm); }
+.topbar-actions { display: flex; gap: 12px; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+.btn-outline:hover { background: var(--panel-hover); border-color: var(--primary); color: var(--primary); }
+
+.content-area { flex: 1; overflow-y: auto; padding: 32px; }
+.view-panel { display: none; animation: fadeIn 0.3s ease; }
+.view-panel.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Overview View */
+.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+.metric-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 24px; position: relative; overflow: hidden; box-shadow: var(--card-shadow); transition: 0.3s; }
+.metric-card:hover { transform: translateY(-4px); }
+.metric-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
+.metric-card::after { content: ''; position: absolute; inset: 0; border-radius: 16px; padding: 1px; background: linear-gradient(135deg, rgba(59,130,246,0.4), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: 0.3s; pointer-events: none; }
+.metric-card:hover::after { opacity: 1; }
+.metric-card:nth-child(1):hover { box-shadow: 0 0 30px rgba(59,130,246,0.15); }
+.metric-card:nth-child(2)::before { background: var(--accent); }
+.metric-card:nth-child(2)::after { background: linear-gradient(135deg, rgba(139,92,246,0.4), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.metric-card:nth-child(2):hover { box-shadow: 0 0 30px rgba(139,92,246,0.15); }
+.metric-card:nth-child(3)::before { background: var(--success); }
+.metric-card:nth-child(3)::after { background: linear-gradient(135deg, rgba(16,185,129,0.4), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.metric-card:nth-child(3):hover { box-shadow: 0 0 30px rgba(16,185,129,0.15); }
+.metric-card:nth-child(4)::before { background: var(--ibm); }
+.metric-card:nth-child(4)::after { background: linear-gradient(135deg, rgba(15,98,254,0.4), transparent 60%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.metric-card:nth-child(4):hover { box-shadow: 0 0 30px rgba(15,98,254,0.15); }
+.metric-title { font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
+.metric-value { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+.metric-sub { font-size: 12px; color: var(--text-muted); }
+
+/* AI Recommendations */
+.recs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.rec-item { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; transition: 0.3s; }
+.rec-item:hover { border-color: var(--primary); transform: translateY(-2px); }
+.rec-icon { font-size: 24px; margin-bottom: 8px; }
+.rec-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.rec-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+.dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;}
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--card-shadow); transition: 0.3s;}
+.card-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+
+/* Pipeline Visualizer */
+.pipeline-flow { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; flex-wrap: wrap; gap: 12px; }
+.pipe-node { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 100px; flex: 1; cursor: pointer; transition: transform 0.2s; }
+.pipe-node:hover { transform: translateY(-4px); }
+.pipe-node.active .pipe-icon-wrapper { border-color: var(--success); box-shadow: 0 0 20px rgba(16,185,129,0.3); }
+.pipe-node.missing .pipe-icon-wrapper { border-color: var(--warning); opacity: 0.6; }
+.pipe-node.recommended .pipe-icon-wrapper { border-color: var(--primary); }
+.pipe-icon-wrapper { width: 64px; height: 64px; background: var(--bg); border: 3px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; position: relative; transition: 0.3s; }
+.pipe-icon-emoji { font-size: 28px; }
+.pipe-status-badge { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; border: 2px solid var(--panel); }
+.pipe-node.missing .pipe-status-badge { background: var(--warning); }
+.pipe-node.recommended .pipe-status-badge { background: var(--primary); }
+.pipe-label { font-size: 13px; font-weight: 700; text-align: center; color: var(--text); }
+.pipe-tools { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.3; }
+.pipe-time { font-size: 10px; color: var(--text-muted); background: var(--bg); padding: 2px 8px; border-radius: 4px; }
+.pipe-line { flex: 0 0 40px; height: 3px; background: linear-gradient(90deg, var(--border) 0%, var(--border) 50%, transparent 50%, transparent 100%); background-size: 8px 3px; position: relative; top: -30px; }
+
+/* Config Usage Cards */
+.config-usage-card { background: linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(139,92,246,0.05) 100%); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.usage-header { display: flex; gap: 16px; align-items: start; margin-bottom: 20px; }
+.usage-icon { font-size: 36px; flex-shrink: 0; }
+.usage-title { font-size: 14px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.usage-desc { font-size: 15px; line-height: 1.6; color: var(--text); }
+.usage-steps { background: var(--bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.usage-step-title { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.usage-step { display: flex; align-items: start; gap: 12px; padding: 8px 0; font-size: 14px; line-height: 1.6; }
+.usage-step code { background: var(--panel); padding: 2px 8px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 13px; color: var(--primary); }
+.step-num { background: var(--primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.usage-next { font-size: 13px; line-height: 1.6; padding: 12px; background: var(--bg); border-left: 3px solid var(--success); border-radius: 6px; margin-bottom: 12px; }
+.usage-next strong { color: var(--success); }
+.usage-details { margin-top: 12px; }
+.usage-details summary { cursor: pointer; font-size: 13px; font-weight: 600; padding: 10px 12px; background: var(--bg); border-radius: 6px; list-style: none; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+.usage-details summary:hover { background: var(--panel-hover); }
+.usage-details summary::-webkit-details-marker { display: none; }
+.usage-details[open] summary { margin-bottom: 12px; }
+.usage-details ul { list-style: none; padding: 0; margin: 0; }
+.usage-details li { padding: 8px 12px; font-size: 13px; line-height: 1.6; border-left: 2px solid var(--border); margin-left: 12px; margin-bottom: 8px; }
+.usage-details li:before { content: "•"; color: var(--primary); font-weight: 700; margin-right: 8px; }
+.pipe-line::after { content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 100%; background: linear-gradient(90deg, transparent, var(--primary), transparent); animation: flow 2s infinite linear; }
+@keyframes flow { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+/* Chart Container */
+.chart-container { position: relative; height: 220px; width: 100%; }
+
+/* Config View (Code Editor Style) */
+.editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.editor-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+.editor-actions { display: flex; gap: 12px; }
+.btn-action { background: var(--panel); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+.btn-action:hover { border-color: var(--primary); color: var(--primary); }
+.btn-action.success { border-color: var(--success); color: var(--success); }
+
+.code-container { background: var(--editor-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; box-shadow: var(--card-shadow); }
+.code-header { background: var(--editor-header); padding: 10px 16px; border-bottom: 1px solid #374151; display: flex; align-items: center; gap: 8px; }
+.mac-dot { width: 12px; height: 12px; border-radius: 50%; }
+.mac-dot.r { background: #ff5f56; } .mac-dot.y { background: #ffbd2e; } .mac-dot.g { background: #27c93f; }
+.filename { margin-left: 12px; font-size: 12px; color: #9ca3af; font-family: 'Fira Code', monospace; }
+.code-content { padding: 20px; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.6; color: #f9fafb; }
+.code-content pre { margin: 0; }
+.code-content code { background: transparent; padding: 0; }
+
+/* Markdown Styles in Summary */
+.md-prose { font-size: 14px; line-height: 1.7; color: var(--text-muted); }
+.md-prose h1, .md-prose h2, .md-prose h3 { color: var(--text); margin-top: 1.5em; margin-bottom: 0.5em; }
+.md-prose h2 { font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.md-prose ul, .md-prose ol { padding-left: 20px; margin-bottom: 1em; }
+.md-prose li { margin-bottom: 0.25em; }
+.md-prose p { margin-bottom: 1em; }
+.md-prose code { background: var(--bg); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.9em; color: var(--primary); }
+.md-prose pre code { background: transparent; border: none; padding: 0; color: inherit; }
+.md-prose blockquote { border-left: 4px solid var(--primary); padding-left: 16px; margin-left: 0; color: var(--text-muted); font-style: italic; }
+
+
+.readiness-layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; margin-bottom: 24px; }
+.score-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+.score-ring { width: 160px; height: 160px; border-radius: 50%; margin: 6px auto 20px; display: grid; place-items: center; background: conic-gradient(var(--success) calc(var(--score) * 1%), var(--border) 0); position: relative; }
+.score-ring::before { content: ''; position: absolute; inset: 12px; border-radius: 50%; background: var(--panel); }
+.score-ring strong { position: relative; font-size: 40px; line-height: 1; }
+.score-status { text-align: center; font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.score-copy { color: var(--text-muted); font-size: 13px; line-height: 1.6; text-align: center; }
+.check-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.check-item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; gap: 10px; align-items: flex-start; }
+.check-mark { width: 24px; height: 24px; border-radius: 999px; display: grid; place-items: center; flex: 0 0 auto; font-size: 13px; font-weight: 800; }
+.check-mark.pass { background: rgba(16,185,129,0.16); color: var(--success); }
+.check-mark.fail { background: rgba(245,158,11,0.16); color: var(--warning); }
+.check-title { font-size: 13px; font-weight: 800; margin-bottom: 2px; }
+.check-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+.action-list { display: grid; gap: 10px; }
+.action-item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text-muted); font-size: 13px; line-height: 1.45; }
+.blocker-item { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.08); color: var(--text); }
+@media (max-width: 1024px) { .readiness-layout { grid-template-columns: 1fr; } .check-grid { grid-template-columns: 1fr; } }
+.theme-toggle-wrapper { position: absolute; top: 20px; right: 20px; }
+
+/* Project History Styles */
+.project-history { padding: 12px; border-top: 1px solid var(--border); max-height: 300px; overflow-y: auto; }
+.project-history-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; margin-bottom: 8px; }
+.project-history-title { font-size: 11px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; }
+.project-history-clear { font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 600; }
+.project-history-clear:hover { text-decoration: underline; }
+.project-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; }
+.project-item:hover { background: var(--panel-hover); border-color: var(--primary); }
+.project-item.active { background: rgba(59, 130, 246, 0.1); border-color: var(--primary); }
+.project-item-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.project-item-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 8px; flex-wrap: wrap; }
+.project-item-tag { background: var(--panel); padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+.project-item-delete { float: right; color: var(--text-muted); font-size: 16px; padding: 0 4px; }
+.project-item-delete:hover { color: #ef4444; }
+.project-history-empty { text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px; }
+
+@media (max-width: 1024px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .metrics-grid { grid-template-columns: 1fr; }
+  .pipeline-flow { flex-direction: column; gap: 20px; }
+  .pipe-line { width: 2px; height: 40px; top: 0; }
+}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="bg-glow-2"></div>
+
+<!-- SETUP VIEW -->
+<div id="setup-view">
+  <div class="theme-toggle-wrapper">
+    <button class="btn-outline" onclick="toggleTheme()" id="setup-theme-btn"> Light Mode</button>
+  </div>
+  <div class="setup-card">
+    <div class="setup-header">
+      <div class="setup-logo"></div>
+      <h1>Ship<span>Sage</span></h1>
+      <p>AI DevOps Readiness & Pipeline Generator</p>
+    </div>
+    
+    <div class="input-group">
+      <label>GitHub Repository URL</label>
+      <div class="input-wrapper">
+        <input type="text" id="repoUrl" placeholder="https://github.com/owner/repository" autocomplete="off"/>
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label>GitHub Token (Optional - for private repos)</label>
+      <div class="input-wrapper">
+        <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off"/>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+        💡 Required for private repositories. <a href="https://github.com/settings/tokens" target="_blank" style="color: var(--primary);">Generate token</a> with 'repo' scope.
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label>AI Provider</label>
+      <select id="aiProvider" onchange="toggleAICredentials()" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;">
+        <option value="rule-based" selected>Rule-based (Free - no IBM billing needed)</option>
+        <option value="watsonx">IBM watsonx Granite (Enterprise)</option>
+        <option value="openai">OpenAI GPT-4 ($0.01/1k tokens)</option>
+        <option value="anthropic">Anthropic Claude ($0.003/1k tokens)</option>
+        <option value="ollama">Ollama (Local - Free)</option>
+      </select>
+    </div>
+    
+    <div class="input-group" id="watsonxCreds" style="display: none;">
+      <label>IBM watsonx Credentials</label>
+      <div class="optional-creds">
+        <input type="password" id="apiKey" placeholder="IBM Cloud API Key"/>
+        <input type="text" id="projectId" placeholder="watsonx Project ID"/>
+      </div>
+    </div>
+    
+    <div class="input-group" id="openaiCreds" style="display: none;">
+      <label>OpenAI API Key</label>
+      <div class="input-wrapper">
+        <input type="password" id="openaiKey" placeholder="sk-..."/>
+      </div>
+    </div>
+    
+    <div class="input-group" id="anthropicCreds" style="display: none;">
+      <label>Anthropic API Key</label>
+      <div class="input-wrapper">
+        <input type="password" id="anthropicKey" placeholder="sk-ant-..."/>
+      </div>
+    </div>
+    
+    <div class="input-group" id="ollamaCreds" style="display: none;">
+      <label>Ollama Configuration</label>
+      <div class="optional-creds">
+        <input type="text" id="ollamaModel" placeholder="Model (llama3)" value="llama3"/>
+        <input type="text" id="ollamaEndpoint" placeholder="Endpoint" value="http://localhost:11434"/>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+        💡 Requires Ollama running locally. <a href="https://ollama.ai" target="_blank" style="color: var(--primary);">Install Ollama</a>
+      </div>
+    </div>
+    
+    <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin: -8px 0 16px;">No IBM Cloud billing? Keep <b>Rule-based</b> selected. ShipSage will still analyze repos, answer questions from repo context, and generate DevOps assets.</div>
+    <div id="setup-error" style="color: var(--red); font-size: 13px; margin-bottom: 16px; display: none; text-align: center;"></div>
+    
+    <button class="btn-primary" id="analyzeBtn" onclick="analyze()">
+      Analyze DevOps Readiness
+    </button>
+    
+    <div class="loading-overlay" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Analyzing Repository...</div>
+      <div class="loading-subtext" id="loadingStep">Cloning codebase into memory</div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD VIEW -->
+<div id="dashboard-view">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"> Ship<span>Sage</span></div>
+    </div>
+    
+    <div class="nav-menu">
+      <div class="nav-section">Dashboard</div>
+      <a class="nav-item active" onclick="switchView('overview', this)"><i></i> Overview</a>
+      <a class="nav-item" onclick="switchView('summary', this)"><i></i> AI Analysis</a>
+      <a class="nav-item" onclick="switchView('cost', this)"><i>💰</i> Cost Estimate</a>
+      
+      <div class="nav-section" style="margin-top: 24px;">Generated Configs</div>
+      <a class="nav-item" onclick="switchView('dockerfile', this)"><i></i> Dockerfile</a>
+      <a class="nav-item" onclick="switchView('compose', this)"><i></i> Docker Compose</a>
+      <a class="nav-item" onclick="switchView('kubernetes', this)"><i></i> Kubernetes</a>
+      <a class="nav-item" onclick="switchView('cicd', this)"><i></i> CI/CD Pipeline</a>
+      <a class="nav-item" onclick="switchView('aws_terraform', this)"><i></i> AWS Terraform</a>
+      <a class="nav-item" onclick="switchView('monitoring', this)"><i></i> ELK Stack</a>
+      <a class="nav-item" onclick="switchView('env_config', this)"><i></i> Env & Nginx</a>
+    </div>
+    
+    <div class="project-history">
+      <div class="project-history-header">
+        <div class="project-history-title">📂 Project History</div>
+        <div class="project-history-clear" onclick="clearProjectHistory()">Clear All</div>
+      </div>
+      <div id="project-history-list">
+        <div class="project-history-empty">No projects yet. Analyze a repository to get started!</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="avatar"></div>
+        <div class="user-info">
+          <div>Dev Team</div>
+          <div>Free Tier</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  
+  <main class="main-content">
+    <header class="topbar">
+      <div class="repo-info">
+        <div class="repo-name">
+           <a id="topbar-repo" href="#" target="_blank">owner/repo</a>
+        </div>
+        <span class="badge" id="topbar-branch">main</span>
+        <span class="badge" id="topbar-stack">Python</span>
+        <span class="badge watsonx" id="topbar-ai"> IBM watsonx Active</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-outline" onclick="toggleTheme()" id="dash-theme-btn"> Light Mode</button>
+        <button class="btn-outline" onclick="downloadAllFiles()" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:#10b981;"> Download All</button>
+        <button class="btn-outline" onclick="backToSetup()">← Back</button>
+        <button class="btn-outline" onclick="location.reload()">+ New Project</button>
+      </div>
+    </header>
+    
+    <div class="content-area">
+      <!-- Overview View -->
+      <div id="view-overview" class="view-panel active">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-title">Files Analyzed</div>
+            <div class="metric-value" id="metric-files">0</div>
+            <div class="metric-sub" id="metric-time">in 0.0s</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">Configs Generated</div>
+            <div class="metric-value">7</div>
+            <div class="metric-sub">Production-ready files</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">Manual Effort Equiv.</div>
+            <div class="metric-value" id="metric-time-saved">0h</div>
+            <div class="metric-sub">Time to write these configs by hand</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">Readiness Score</div>
+            <div class="metric-value" id="metric-readiness">0%</div>
+            <div class="metric-sub" id="metric-readiness-sub">Waiting for analysis</div>
+          </div>
+        </div>
+        
+        
+        <div class="readiness-layout">
+          <div class="score-panel">
+            <div class="card-title">Production Readiness</div>
+            <div class="score-ring" id="score-ring" style="--score:0"><strong id="score-number">0</strong></div>
+            <div class="score-status" id="score-status">Analyze a repo</div>
+            <div class="score-copy" id="score-summary">ShipSage checks the repo for the basics a team needs before trusting generated deployment code.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Trust Checks</div>
+            <div class="check-grid" id="trust-checks"></div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="card">
+            <div class="card-title">Deployment Blockers</div>
+            <div class="action-list" id="blocker-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">What To Do Next</div>
+            <div class="action-list" id="next-actions"></div>
+          </div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-title"><i></i> Deployment Pipeline Architecture</div>
+            <div class="pipeline-flow" id="pipeline-flow">
+              <!-- Pipeline stages will be dynamically rendered here -->
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-title"><i></i> Detected Stack</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="stack-tags">
+              <!-- Stack tags inserted here -->
+            </div>
+            <div style="margin-top: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+              ShipSage detected the framework and dependencies to automatically configure multi-stage Docker builds and optimal Kubernetes resource limits.
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="card">
+            <div class="card-title"><i></i> Manual Effort by Config (hours)</div>
+            <div class="chart-container">
+              <canvas id="timeSavedChart"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i></i> DevOps Maturity Radar</div>
+            <div class="chart-container">
+              <canvas id="complexityChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-title"><i></i> AI DevOps Recommendations</div>
+          <div class="recs-grid" id="ai-recs">
+            <!-- Populated dynamically by renderRecommendations() -->
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-title"><i>💬</i> Ask Questions About This Repository</div>
+          <div id="chat-history" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+            <div style="font-size: 13px; color: var(--text-muted); text-align: center;">Ask anything about the repository architecture, setup, or code.</div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="chat-input" placeholder="How do I deploy this locally?" style="flex: 1; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text);">
+            <button id="chat-send" onclick="askRepo()" style="padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Ask</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Executive Summary View -->
+      <div id="view-executive" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title">👔 Executive Summary Dashboard</div>
+        </div>
+        
+        <!-- Executive Overview Cards -->
+        <div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 24px;">
+          <div class="card" style="text-align: center;">
+            <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Deployment Timeline</div>
+            <div style="font-size: 42px; font-weight: 800; color: var(--primary); margin-bottom: 8px;" id="exec-timeline-days">0</div>
+            <div style="font-size: 13px; color: var(--text-muted);" id="exec-timeline-date">Target Date</div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Confidence Level</div>
+              <div style="font-size: 16px; font-weight: 700;" id="exec-confidence">Medium</div>
+            </div>
+          </div>
+          
+          <div class="card" style="text-align: center;">
+            <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Annual ROI</div>
+            <div style="font-size: 42px; font-weight: 800; color: var(--success); margin-bottom: 8px;" id="exec-roi-annual">$0</div>
+            <div style="font-size: 13px; color: var(--text-muted);">12-Month Projection</div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Monthly Savings</div>
+              <div style="font-size: 16px; font-weight: 700; color: var(--success);" id="exec-roi-monthly">$0</div>
+            </div>
+          </div>
+          
+          <div class="card" style="text-align: center;">
+            <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Team Resources</div>
+            <div style="font-size: 42px; font-weight: 800; color: var(--accent); margin-bottom: 8px;" id="exec-team-size">0</div>
+            <div style="font-size: 13px; color: var(--text-muted);">Engineers Required</div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Duration</div>
+              <div style="font-size: 16px; font-weight: 700;" id="exec-duration">0 weeks</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Deployment Timeline Phases -->
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-title">📅 Deployment Roadmap</div>
+          <div id="exec-timeline-phases" style="display: grid; gap: 16px;"></div>
+        </div>
+        
+        <!-- Strengths and Gaps -->
+        <div class="dashboard-grid" style="margin-bottom: 24px;">
+          <div class="card">
+            <div class="card-title" style="color: var(--success);">✅ Strengths</div>
+            <div id="exec-strengths" style="display: grid; gap: 10px;"></div>
+          </div>
+          
+          <div class="card">
+            <div class="card-title" style="color: var(--warning);">⚠️ Gaps to Address</div>
+            <div id="exec-gaps" style="display: grid; gap: 10px;"></div>
+          </div>
+        </div>
+        
+        <!-- Executive Recommendations -->
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-title">🎯 Executive Recommendations</div>
+          <div id="exec-recommendations" style="display: grid; gap: 12px;"></div>
+        </div>
+        
+        <!-- Risk Assessment -->
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-title">🛡️ Risk Assessment</div>
+          <div id="exec-risks" style="display: grid; gap: 12px;"></div>
+        </div>
+        
+        <!-- Quick Wins -->
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-title">⚡ Quick Wins (High Impact, Low Effort)</div>
+          <div id="exec-quick-wins" style="display: grid; gap: 12px;"></div>
+        </div>
+        
+        <!-- ROI Details -->
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-title">💰 Financial Impact</div>
+            <div style="display: grid; gap: 16px;">
+              <div>
+                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">Setup Cost Savings</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--primary);" id="exec-roi-setup">$0</div>
+              </div>
+              <div style="padding-top: 16px; border-top: 1px solid var(--border);">
+                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">Break-Even Period</div>
+                <div style="font-size: 20px; font-weight: 700;" id="exec-roi-breakeven">Immediate</div>
+              </div>
+              <div style="padding-top: 16px; border-top: 1px solid var(--border);">
+                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">ROI Percentage</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--success);" id="exec-roi-percentage">∞</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-title">🎁 Intangible Benefits</div>
+            <div id="exec-intangible-benefits" style="display: grid; gap: 8px;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Summary View -->
+      <div id="view-summary" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title"><i></i> AI Codebase Analysis</div>
+        </div>
+        <!-- Architecture Summary -->
+        <div class="card md-prose" id="content-summary" style="margin-bottom: 24px;"></div>
+        <!-- Module Breakdown -->
+        <div class="card" id="module-breakdown-card" style="display:none;">
+          <div class="card-title">🧩 Module Breakdown</div>
+          <div id="module-breakdown-content" style="margin-top: 12px;"></div>
+        </div>
+      </div>
+      
+      <!-- Cost Estimation View -->
+      <div id="view-cost" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title">💰 AWS Cost Estimation</div>
+        </div>
+        
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 2fr; margin-bottom: 24px;">
+          <div class="card" style="text-align: center;">
+            <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Estimated Monthly Cost</div>
+            <div style="font-size: 48px; font-weight: 800; color: var(--primary); margin-bottom: 8px;" id="cost-total">$0.00</div>
+            <div style="font-size: 13px; color: var(--text-muted);" id="cost-region">US East 1</div>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); line-height: 1.6;" id="cost-disclaimer"></div>
+          </div>
+          
+          <div class="card">
+            <div class="card-title">💳 Cost Breakdown by Service</div>
+            <div id="cost-breakdown" style="display: grid; gap: 8px;"></div>
+          </div>
+        </div>
+        
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="card">
+            <div class="card-title">⚠️ Warnings</div>
+            <div id="cost-warnings" style="display: grid; gap: 8px;"></div>
+          </div>
+          
+          <div class="card">
+            <div class="card-title">💡 Cost Optimization Tips</div>
+            <div id="cost-optimizations" style="display: grid; gap: 8px;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Generated Config Views -->
+      <!-- Docker -->
+      <div id="view-dockerfile" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title"><i></i> Dockerfile</div>
+          <div class="editor-actions">
+            <button class="btn-action" onclick="downloadFile('dockerfile', 'Dockerfile')"> Download</button>
+            <button class="btn-action" onclick="copyCode('dockerfile', this)"> Copy</button>
+          </div>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="mac-dot r"></div><div class="mac-dot y"></div><div class="mac-dot g"></div>
+            <div class="filename">Dockerfile</div>
+          </div>
+          <div class="code-content"><pre><code class="language-dockerfile" id="content-dockerfile"></code></pre></div>
+        </div>
+      </div>
+      
+      <!-- Compose -->
+      <div id="view-compose" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title"><i></i> Docker Compose</div>
+          <div class="editor-actions">
+            <button class="btn-action" onclick="downloadFile('compose', 'docker-compose.yml')"> Download</button>
+            <button class="btn-action" onclick="copyCode('compose', this)"> Copy</button>
+          </div>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="mac-dot r"></div><div class="mac-dot y"></div><div class="mac-dot g"></div>
+            <div class="filename">docker-compose.yml</div>
+          </div>
+          <div class="code-content"><pre><code class="language-yaml" id="content-compose"></code></pre></div>
+        </div>
+      </div>
+      
+      <!-- Kubernetes -->
+      <div id="view-kubernetes" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title"><i></i> Kubernetes Manifests</div>
+          <div class="editor-actions">
+            <button class="btn-action" onclick="downloadFile('kubernetes', 'k8s-manifests.yaml')"> Download</button>
+            <button class="btn-action" onclick="copyCode('kubernetes', this)"> Copy</button>
+          </div>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="mac-dot r"></div><div class="mac-dot y"></div><div class="mac-dot g"></div>
+            <div class="filename">k8s-manifests.yaml</div>
+          </div>
+          <div class="code-content"><pre><code class="language-yaml" id="content-kubernetes"></code></pre></div>
+        </div>
+      </div>
+
+      <!-- CI/CD -->
+      <div id="view-cicd" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title"><i></i> GitHub Actions CI/CD</div>
+          <div class="editor-actions">
+            <button class="btn-action" onclick="downloadFile('cicd', 'main.yml')"> Download</button>
+            <button class="btn-action" onclick="copyCode('cicd', this)"> Copy</button>
+          </div>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="mac-dot r"></div><div class="mac-dot y"></div><div class="mac-dot g"></div>
+            <div class="filename">.github/workflows/main.yml</div>
+          </div>
+          <div class="code-content"><pre><code class="language-yaml" id="content-cicd"></code></pre></div>
+        </div>
+      </div>
+
+      <!-- AWS Terraform -->
+      <div id="view-aws_terraform" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title"><i></i> AWS Terraform</div>
+          <div class="editor-actions">
+            <button class="btn-action" onclick="downloadFile('aws_terraform', 'main.tf')"> Download</button>
+            <button class="btn-action" onclick="copyCode('aws_terraform', this)"> Copy</button>
+          </div>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="mac-dot r"></div><div class="mac-dot y"></div><div class="mac-dot g"></div>
+            <div class="filename">main.tf</div>
+          </div>
+          <div class="code-content"><pre><code class="language-hcl" id="content-aws_terraform"></code></pre></div>
+        </div>
+      </div>
+
+      <!-- ELK Monitoring -->
+      <div id="view-monitoring" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title"><i></i> ELK Stack & Prometheus</div>
+          <div class="editor-actions">
+            <button class="btn-action" onclick="downloadFile('monitoring', 'monitoring.yml')"> Download</button>
+            <button class="btn-action" onclick="copyCode('monitoring', this)"> Copy</button>
+          </div>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="mac-dot r"></div><div class="mac-dot y"></div><div class="mac-dot g"></div>
+            <div class="filename">monitoring.yml</div>
+          </div>
+          <div class="code-content"><pre><code class="language-yaml" id="content-monitoring"></code></pre></div>
+        </div>
+      </div>
+
+      <!-- Env & Nginx -->
+      <div id="view-env_config" class="view-panel">
+        <div class="editor-header">
+          <div class="editor-title"><i></i> Env Template & Nginx Proxy</div>
+          <div class="editor-actions">
+            <button class="btn-action" onclick="downloadFile('env_config', '.env.template')"> Download</button>
+            <button class="btn-action" onclick="copyCode('env_config', this)"> Copy</button>
+          </div>
+        </div>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="mac-dot r"></div><div class="mac-dot y"></div><div class="mac-dot g"></div>
+            <div class="filename">.env.template & nginx.conf</div>
+          </div>
+          <div class="code-content"><pre><code class="language-nginx" id="content-env_config"></code></pre></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+let globalData = {};
+let isLightMode = false;
+let timeChartInst = null;
+let complexityChartInst = null;
+
+// Toggle AI Provider Credentials
+function toggleAICredentials() {
+  const provider = document.getElementById('aiProvider').value;
+  document.getElementById('watsonxCreds').style.display = provider === 'watsonx' ? 'block' : 'none';
+  document.getElementById('openaiCreds').style.display = provider === 'openai' ? 'block' : 'none';
+  document.getElementById('anthropicCreds').style.display = provider === 'anthropic' ? 'block' : 'none';
+  document.getElementById('ollamaCreds').style.display = provider === 'ollama' ? 'block' : 'none';
+}
+
+// Theme Toggle
+function toggleTheme() {
+  isLightMode = !isLightMode;
+  if (isLightMode) {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('setup-theme-btn').innerHTML = ' Dark Mode';
+    document.getElementById('dash-theme-btn').innerHTML = ' Dark Mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('setup-theme-btn').innerHTML = ' Light Mode';
+    document.getElementById('dash-theme-btn').innerHTML = ' Light Mode';
+  }
+  // Re-render charts to update grid lines colors
+  if(timeChartInst) timeChartInst.update();
+  if(complexityChartInst) complexityChartInst.update();
+}
+
+const STEPS = ["Cloning codebase into memory...","Analyzing project architecture...","Detecting languages & frameworks...","Generating optimal Dockerfile...","Building Kubernetes manifests...","Configuring GitHub Actions CI/CD...","Provisioning AWS Terraform...","Setting up ELK monitoring...","Finalizing deployment pipeline..."];
+let stepInterval;
+
+function startLoading() {
+  document.getElementById('loading').style.display = 'flex';
+  let i = 0;
+  stepInterval = setInterval(() => {
+    i = (i + 1) % STEPS.length;
+    document.getElementById('loadingStep').textContent = STEPS[i];
+  }, 1500);
+}
+
+function stopLoading() {
+  clearInterval(stepInterval);
+  document.getElementById('loading').style.display = 'none';
+}
+
+async function analyze() {
+  const url = document.getElementById('repoUrl').value.trim();
+  const githubToken = document.getElementById('githubToken').value.trim();
+  const aiProvider = document.getElementById('aiProvider').value;
+  const errorEl = document.getElementById('setup-error');
+  
+  if (!url) {
+    errorEl.textContent = "Please enter a valid GitHub repository URL.";
+    errorEl.style.display = 'block';
+    return;
+  }
+  
+  // Store owner ID for future sessions
+  if (!localStorage.getItem('shipsage_owner_id')) {
+    const ownerId = 'user_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('shipsage_owner_id', ownerId);
+  }
+  const currentOwnerId = localStorage.getItem('shipsage_owner_id');
+
+  // Build request payload
+  const payload = {
+    repo_url: url,
+    github_token: githubToken,
+    ai_provider: aiProvider,
+    owner_id: currentOwnerId
+  };
+  
+  // Add provider-specific credentials
+  if (aiProvider === 'watsonx') {
+    payload.watsonx_api_key = document.getElementById('apiKey').value.trim();
+    payload.watsonx_project_id = document.getElementById('projectId').value.trim();
+  } else if (aiProvider === 'openai') {
+    payload.openai_api_key = document.getElementById('openaiKey').value.trim();
+  } else if (aiProvider === 'anthropic') {
+    payload.anthropic_api_key = document.getElementById('anthropicKey').value.trim();
+  } else if (aiProvider === 'ollama') {
+    payload.ollama_model = document.getElementById('ollamaModel').value.trim() || 'llama3';
+    payload.ollama_endpoint = document.getElementById('ollamaEndpoint').value.trim() || 'http://localhost:11434';
+  }
+  
+  errorEl.style.display = 'none';
+  document.getElementById('analyzeBtn').disabled = true;
+  startLoading();
+  
+  try {
+    const r = await fetch('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Analysis failed');
+    
+    globalData = d;
+    renderDashboard(d);
+    
+    // Transition to dashboard
+    document.getElementById('setup-view').style.display = 'none';
+    document.getElementById('dashboard-view').style.display = 'flex';
+    
+    // Init charts
+    initCharts(d);
+    
+    // Initialize collaboration if session_id is available
+    if (d.session_id) {
+      currentSessionId = d.session_id;
+      initCollaboration(d.session_id);
+    }
+    
+    // Save to localStorage history & render sidebar
+    saveToLocalHistory(d);
+    renderProjectHistory();
+    
+  } catch(e) {
+    errorEl.textContent = e.message || 'Something went wrong connecting to the server.';
+    errorEl.style.display = 'block';
+  } finally {
+    stopLoading();
+    document.getElementById('analyzeBtn').disabled = false;
+  }
+}
+
+// Project History Management (localStorage-based for persistence across restarts)
+let currentSessionId = null;
+let currentOwnerId = null;
+
+function getLocalHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('shipsage_history') || '[]');
+  } catch { return []; }
+}
+
+function saveToLocalHistory(d) {
+  try {
+    const history = getLocalHistory();
+    // Store ONLY summary data - NOT full configs (too large for localStorage)
+    const entry = {
+      id: d.session_id || Date.now().toString(),
+      repo: d.repo,
+      branch: d.branch,
+      project_type: d.project_type,
+      stack: (d.stack || []).slice(0, 5),
+      readiness_score: d.readiness?.score || 0,
+      readiness_status: d.readiness?.status || '',
+      time_saved: d.readiness?.time_saved_hours || 0,
+      time_saved_breakdown: d.readiness?.time_saved_breakdown || [],
+      signals: d.readiness?.signals || {},
+      analyzed_files: d.analyzed_files || 0,
+      analysis_time: d.analysis_time || 0,
+      ai_powered: d.ai_powered || false,
+      analyzed_at: new Date().toISOString(),
+      // Store the repo_url so we can re-analyze
+      repo_url: `https://github.com/${d.repo}`
+    };
+    // Remove duplicate if same repo
+    const filtered = history.filter(h => h.repo !== entry.repo);
+    filtered.unshift(entry); // newest first
+    // Keep max 20
+    localStorage.setItem('shipsage_history', JSON.stringify(filtered.slice(0, 20)));
+  } catch(e) {
+    console.warn('Failed to save history:', e);
+  }
+}
+
+function renderProjectHistory() {
+  const history = getLocalHistory();
+  const listEl = document.getElementById('project-history-list');
+  if (!listEl) return;
+  
+  if (history.length === 0) {
+    listEl.innerHTML = '<div class="project-history-empty">No projects yet. Analyze a repository to get started!</div>';
+    return;
+  }
+  
+  listEl.innerHTML = history.map((h, idx) => {
+    const isActive = h.repo === globalData?.repo;
+    const timeAgo = getTimeAgo(h.analyzed_at);
+    return `
+      <div class="project-item ${isActive ? 'active' : ''}" onclick="loadLocalProject(${idx})">
+        <div class="project-item-name">
+          📦 ${(h.repo || 'Unknown').split('/').pop()}
+          <span class="project-item-delete" onclick="event.stopPropagation(); deleteLocalProject(${idx})">×</span>
+        </div>
+        <div class="project-item-meta">
+          <span class="project-item-tag">${h.project_type || 'Unknown'}</span>
+          ${(h.stack || []).map(t => '<span class="project-item-tag">' + t + '</span>').join('')}
+          <span style="margin-left: auto; font-size: 10px;">${timeAgo}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function getTimeAgo(iso) {
+  try {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  } catch { return ''; }
+}
+
+function loadLocalProject(idx) {
+  const history = getLocalHistory();
+  const entry = history[idx];
+  if (!entry) return;
+  
+  // Re-analyze from server (we only store summaries, not full data)
+  document.getElementById('repoUrl').value = entry.repo_url || `https://github.com/${entry.repo}`;
+  
+  // Show setup view briefly, then auto-analyze
+  document.getElementById('setup-view').style.display = 'flex';
+  document.getElementById('dashboard-view').style.display = 'none';
+  
+  // Auto-trigger analysis
+  analyze();
+}
+
+function deleteLocalProject(idx) {
+  if (!confirm('Remove this project from history?')) return;
+  const history = getLocalHistory();
+  const removed = history.splice(idx, 1);
+  localStorage.setItem('shipsage_history', JSON.stringify(history));
+  // If deleted the current project, go back to setup
+  if (removed[0]?.repo === globalData?.repo) {
+    backToSetup();
+  } else {
+    renderProjectHistory();
+  }
+}
+
+function backToSetup() {
+  document.getElementById('setup-view').style.display = 'flex';
+  document.getElementById('dashboard-view').style.display = 'none';
+}
+
+async function loadProject(sessionId) {
+  try {
+    const response = await fetch(`/api/sessions/${sessionId}`);
+    if (!response.ok) {
+      alert('Failed to load project. It may have expired.');
+      await loadProjectHistory();
+      return;
+    }
+    
+    const data = await response.json();
+    currentSessionId = sessionId;
+    
+    // Store in localStorage
+    localStorage.setItem('shipsage_current_session', sessionId);
+    
+    // Render the dashboard with loaded data
+    globalData = data;
+    renderDashboard(data);
+    
+    // Update project history UI
+    await loadProjectHistory();
+    
+    // Reinit charts
+    initCharts(data);
+    
+    // Show dashboard if not already visible
+    document.getElementById('setup-view').style.display = 'none';
+    document.getElementById('dashboard-view').style.display = 'flex';
+    
+    // Initialize collaboration if session_id is available
+    if (data.session && data.session.id) {
+      initCollaboration(data.session.id);
+    }
+  } catch (error) {
+    console.error('Failed to load project:', error);
+    alert('Failed to load project: ' + error.message);
+  }
+}
+
+async function deleteProject(sessionId) {
+  if (!confirm('Are you sure you want to delete this project from history?')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/sessions/${sessionId}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete project');
+    }
+    
+    // If we deleted the current project, reload the page
+    if (sessionId === currentSessionId) {
+      location.reload();
+    } else {
+      // Just refresh the history list
+      await loadProjectHistory();
+    }
+  } catch (error) {
+    console.error('Failed to delete project:', error);
+    alert('Failed to delete project: ' + error.message);
+  }
+}
+
+function clearProjectHistory() {
+  if (!confirm('Clear all project history? This cannot be undone.')) return;
+  localStorage.removeItem('shipsage_history');
+  renderProjectHistory();
+}
+
+function renderDashboard(d) {
+  // Topbar
+  document.getElementById('topbar-repo').textContent = d.repo;
+  document.getElementById('topbar-repo').href = `https://github.com/${d.repo}`;
+  document.getElementById('topbar-branch').textContent = d.branch;
+  document.getElementById('topbar-stack').textContent = d.project_type || 'Project';
+  
+  const aiBadge = document.getElementById('topbar-ai');
+  if (d.ai_powered) {
+    aiBadge.className = 'badge watsonx';
+    aiBadge.textContent = ' IBM watsonx Active';
+  } else {
+    aiBadge.className = 'badge';
+    aiBadge.style.background = 'rgba(245,158,11,0.1)';
+    aiBadge.style.borderColor = 'rgba(245,158,11,0.3)';
+    aiBadge.style.color = '#fbbf24';
+    aiBadge.textContent = ' Smart Rule Generation';
+  }
+  
+  // Overview metrics
+  document.getElementById('metric-files').textContent = d.analyzed_files;
+  document.getElementById('metric-time').textContent = `Analyzed in ${d.analysis_time}s`;
+  
+  // Time saved metric
+  const timeSaved = d.readiness?.time_saved_hours || 0;
+  animateValue(document.getElementById('metric-time-saved'), timeSaved, 'h');
+  
+  renderReadiness(d.readiness);
+  
+  // Stack tags
+  const stackTags = document.getElementById('stack-tags');
+  stackTags.innerHTML = (d.stack || []).map(s => `<span style="background:var(--panel-hover);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;">${s}</span>`).join('');
+  
+  // Summary Markdown
+  document.getElementById('content-summary').innerHTML = marked.parse(d.summary || '*No analysis available*');
+
+  // Module Breakdown
+  if (d.module_breakdown) {
+    renderModuleBreakdown(d.module_breakdown);
+  }
+  
+  // Config Editors
+  const configs = ['dockerfile', 'compose', 'kubernetes', 'cicd', 'aws_terraform', 'monitoring', 'env_config'];
+  configs.forEach(id => {
+    const el = document.getElementById('content-' + id);
+    if(el) {
+      el.textContent = d[id] || '# Generated empty';
+      hljs.highlightElement(el);
+    }
+  });
+  
+  // Render cost estimation
+  if (d.cost_estimate) {
+    renderCostEstimate(d.cost_estimate);
+  }
+  
+  // Render dynamic AI recommendations
+  renderRecommendations(d.readiness?.signals || {}, d.stack || [], d.project_type || '');
+  
+  // Render executive summary
+  if (d.executive_summary) {
+    renderExecutiveSummary(d.executive_summary);
+  }
+  
+  // Render pipeline stages
+  if (d.pipeline_stages) {
+    renderPipeline(d.pipeline_stages);
+  }
+}
+
+function renderPipeline(stages) {
+  const pipelineFlow = document.getElementById('pipeline-flow');
+  if (!pipelineFlow || !stages || stages.length === 0) return;
+  
+  let html = '';
+  stages.forEach((stage, index) => {
+    // Status class for styling
+    const statusClass = stage.status === 'configured' ? 'active' :
+                       stage.status === 'missing' ? 'missing' : 'recommended';
+    
+    // Status icon
+    const statusIcon = stage.status === 'configured' ? '✓' :
+                      stage.status === 'missing' ? '✗' : '!';
+    
+    // Stage node
+    html += `
+      <div class="pipe-node ${statusClass}" title="${stage.description}">
+        <div class="pipe-icon-wrapper">
+          <div class="pipe-icon-emoji">${stage.icon}</div>
+          <div class="pipe-status-badge">${statusIcon}</div>
+        </div>
+        <div class="pipe-label">${stage.name}</div>
+        <div class="pipe-tools">${stage.tools.join(', ')}</div>
+        <div class="pipe-time">${stage.time}</div>
+      </div>
+    `;
+    
+    // Add connector line between stages (except after last stage)
+    if (index < stages.length - 1) {
+      html += '<div class="pipe-line"></div>';
+    }
+  });
+  
+  pipelineFlow.innerHTML = html;
+}
+
+function renderCostEstimate(cost) {
+  // Total cost
+  document.getElementById('cost-total').textContent = `$${cost.monthly_total.toFixed(2)}`;
+  document.getElementById('cost-region').textContent = cost.region || 'US East 1';
+  document.getElementById('cost-disclaimer').textContent = cost.disclaimer || '';
+  
+  // Breakdown
+  const breakdown = document.getElementById('cost-breakdown');
+  breakdown.innerHTML = Object.entries(cost.breakdown || {}).map(([service, amount]) => {
+    const percentage = ((amount / cost.monthly_total) * 100).toFixed(1);
+    return `
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg); border-radius: 8px;">
+        <div style="flex: 1;">
+          <div style="font-size: 13px; font-weight: 600;">${service}</div>
+          <div style="width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-top: 4px; overflow: hidden;">
+            <div style="width: ${percentage}%; height: 100%; background: var(--primary);"></div>
+          </div>
+        </div>
+        <div style="font-size: 14px; font-weight: 700; margin-left: 16px; color: var(--primary);">$${amount.toFixed(2)}</div>
+      </div>
+    `;
+  }).join('');
+  
+  // Warnings
+  const warnings = document.getElementById('cost-warnings');
+  if (cost.warnings && cost.warnings.length > 0) {
+    warnings.innerHTML = cost.warnings.map(w => `
+      <div style="padding: 10px 12px; background: rgba(245,158,11,0.1); border-left: 3px solid var(--warning); border-radius: 6px; font-size: 13px; line-height: 1.5;">
+        ⚠️ ${w}
+      </div>
+    `).join('');
+  } else {
+    warnings.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">No warnings</div>';
+  }
+  
+  // Optimizations
+  const optimizations = document.getElementById('cost-optimizations');
+  if (cost.optimizations && cost.optimizations.length > 0) {
+    optimizations.innerHTML = cost.optimizations.map(o => `
+      <div style="padding: 10px 12px; background: var(--bg); border-left: 3px solid var(--success); border-radius: 6px; font-size: 13px; line-height: 1.5;">
+        💡 ${o}
+      </div>
+    `).join('');
+  } else {
+    optimizations.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">No recommendations</div>';
+  }
+}
+
+
+function renderReadiness(readiness) {
+  const r = readiness || { score: 0, status: 'Unknown', summary: 'No readiness data available.', signals: {}, blockers: [], next_actions: [] };
+  const score = Math.max(0, Math.min(100, r.score || 0));
+  document.getElementById('metric-readiness').textContent = `${score}%`;
+  document.getElementById('metric-readiness-sub').textContent = r.status || 'Needs review';
+  document.getElementById('score-ring').style.setProperty('--score', score);
+  document.getElementById('score-number').textContent = score;
+  document.getElementById('score-status').textContent = r.status || 'Needs review';
+  document.getElementById('score-summary').textContent = r.summary || '';
+
+  const labels = {
+    tests: ['Tests', 'Automated checks before deployment'],
+    ci: ['CI/CD', 'A workflow runs build/test/deploy steps'],
+    docker: ['Container', 'Docker assets already exist or were generated'],
+    env_template: ['Env Template', 'Required configuration is documented'],
+    docs: ['Docs', 'README or docs are present'],
+    health: ['Health Check', 'App exposes or implies a health contract'],
+    infra: ['Infra Code', 'Terraform, Kubernetes, Helm, or similar assets found']
+  };
+  document.getElementById('trust-checks').innerHTML = Object.entries(labels).map(([key, value]) => {
+    const passed = !!r.signals?.[key];
+    return `<div class="check-item"><div class="check-mark ${passed ? 'pass' : 'fail'}">${passed ? 'OK' : '!'}</div><div><div class="check-title">${value[0]}</div><div class="check-desc">${value[1]}</div></div></div>`;
+  }).join('');
+
+  const blockers = (r.blockers && r.blockers.length) ? r.blockers : ['No major blockers detected. Still review generated files before production use.'];
+  document.getElementById('blocker-list').innerHTML = blockers.map(item => `<div class="action-item blocker-item">${item}</div>`).join('');
+  document.getElementById('next-actions').innerHTML = (r.next_actions || []).map(item => `<div class="action-item">${item}</div>`).join('');
+}
+function initCharts(d) {
+  Chart.defaults.color = () => isLightMode ? '#6b7280' : '#9ca3af';
+  Chart.defaults.font.family = 'Inter';
+  
+  if (timeChartInst) timeChartInst.destroy();
+  if (complexityChartInst) complexityChartInst.destroy();
+
+  const timeBreakdown = d?.readiness?.time_saved_breakdown || [2, 4, 3, 3.5, 1.5];
+  const signals = d?.readiness?.signals || {};
+  
+  // Color code: green = repo already has it (low effort), orange = needs generation (high effort)
+  const barColors = [
+    signals.docker   ? 'rgba(16,185,129,0.7)' : '#3b82f6',  // Docker
+    signals.infra    ? 'rgba(16,185,129,0.7)' : '#8b5cf6',  // K8s
+    signals.ci       ? 'rgba(16,185,129,0.7)' : '#f59e0b',  // CI/CD
+    signals.infra    ? 'rgba(16,185,129,0.7)' : '#ef4444',  // Terraform
+    signals.monitoring ? 'rgba(16,185,129,0.7)' : '#ec4899', // ELK
+  ];
+  
+  const ctxTime = document.getElementById('timeSavedChart').getContext('2d');
+  timeChartInst = new Chart(ctxTime, {
+    type: 'bar',
+    data: {
+      labels: ['Docker', 'K8s', 'CI/CD', 'Terraform', 'ELK'],
+      datasets: [{
+        label: 'Hours',
+        data: timeBreakdown,
+        backgroundColor: barColors,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            afterLabel: function(ctx) {
+              const keys = ['docker', 'infra', 'ci', 'infra', 'monitoring'];
+              const key = keys[ctx.dataIndex];
+              return signals[key] ? '✓ Already present in repo' : '⚠ Missing — generated by ShipSage';
+            }
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: () => isLightMode ? '#e5e7eb' : '#374151' }, title: { display: true, text: 'Hours', font: { size: 11 } } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Build dynamic radar from actual repo signals (using signals defined above)
+  const radarData = [
+    (signals.docker ? 40 : 0) + (signals.infra ? 40 : 0) + 20,       // Networking (docker+infra)
+    (signals.env_template ? 50 : 0) + (signals.docs ? 30 : 0) + 20,  // Config Mgmt
+    (signals.docker ? 50 : 0) + (signals.health ? 30 : 0) + 20,      // Compute
+    (signals.security ? 50 : 0) + (signals.secrets ? 30 : 0) + 20,    // Security
+    (signals.monitoring ? 50 : 0) + (signals.ci ? 30 : 0) + 20,       // Observability
+  ];
+
+  const ctxComp = document.getElementById('complexityChart').getContext('2d');
+  complexityChartInst = new Chart(ctxComp, {
+    type: 'radar',
+    data: {
+      labels: ['Networking', 'Config Mgmt', 'Compute', 'Security', 'Observability'],
+      datasets: [{
+        label: 'Maturity Score',
+        data: radarData,
+        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+        borderColor: '#8b5cf6',
+        pointBackgroundColor: '#8b5cf6',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          angleLines: { color: () => isLightMode ? '#e5e7eb' : '#374151' },
+          grid: { color: () => isLightMode ? '#e5e7eb' : '#374151' },
+          ticks: { display: false },
+          pointLabels: { font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function switchView(id, el) {
+  document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-' + id).classList.add('active');
+}
+
+function copyCode(id, btn) {
+  const content = globalData[id];
+  if(content) {
+    navigator.clipboard.writeText(content).then(() => {
+      const originalText = btn.innerHTML;
+      btn.innerHTML = ' Copied!';
+      btn.classList.add('success');
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('success');
+      }, 2000);
+    });
+  }
+}
+
+function downloadFile(id, filename) {
+  const content = globalData[id];
+  if(content) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function downloadAllFiles() {
+  try {
+    const response = await fetch('/export-zip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(globalData)
+    });
+    
+    if (!response.ok) throw new Error('Export failed');
+    
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `shipsage-${globalData.repo.replace('/', '-')}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    alert('Failed to export ZIP: ' + error.message);
+  }
+}
+
+function animateValue(el, end, suffix) {
+  let start = 0;
+  const duration = 1000;
+  const startTime = performance.now();
+  function update(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(eased * end) + (suffix || '');
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+function renderExecutiveSummary(exec) {
+  if (!exec) return;
+  
+  // Overview metrics
+  const timeline = exec.timeline || {};
+  document.getElementById('exec-timeline-days').textContent = timeline.total_days || 0;
+  document.getElementById('exec-timeline-date').textContent = timeline.target_date || 'TBD';
+  document.getElementById('exec-confidence').textContent = timeline.confidence || 'Medium';
+  
+  const roi = exec.roi || {};
+  document.getElementById('exec-roi-annual').textContent = `$${(roi.annual_savings || 0).toLocaleString()}`;
+  document.getElementById('exec-roi-monthly').textContent = `$${(roi.monthly_savings || 0).toLocaleString()}`;
+  document.getElementById('exec-roi-setup').textContent = `$${(roi.setup_savings || 0).toLocaleString()}`;
+  document.getElementById('exec-roi-breakeven').textContent = roi.break_even_months === 0 ? 'Immediate' : `${roi.break_even_months} months`;
+  document.getElementById('exec-roi-percentage').textContent = roi.roi_percentage || '∞';
+  
+  const resources = exec.resource_requirements || {};
+  document.getElementById('exec-team-size').textContent = resources.team_size || 0;
+  document.getElementById('exec-duration').textContent = `${resources.duration_weeks || 0} weeks`;
+  
+  // Timeline phases
+  const phasesEl = document.getElementById('exec-timeline-phases');
+  if (timeline.phases && timeline.phases.length > 0) {
+    phasesEl.innerHTML = timeline.phases.map((phase, idx) => `
+      <div style="background: var(--bg); border-left: 4px solid ${idx === 0 ? 'var(--primary)' : idx === 1 ? 'var(--accent)' : 'var(--success)'}; border-radius: 8px; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+          <div>
+            <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">${phase.name}</div>
+            <div style="font-size: 13px; color: var(--text-muted);">${phase.duration} days • ${phase.start_date} to ${phase.end_date}</div>
+          </div>
+          <div style="background: ${idx === 0 ? 'rgba(59,130,246,0.1)' : idx === 1 ? 'rgba(139,92,246,0.1)' : 'rgba(16,185,129,0.1)'}; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">${Math.round((phase.duration / timeline.total_days) * 100)}%</div>
+        </div>
+        <div style="font-size: 13px; line-height: 1.6; color: var(--text-muted); margin-bottom: 12px;">${phase.description}</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          ${phase.tasks.map(task => `<span style="background: var(--panel); padding: 4px 10px; border-radius: 6px; font-size: 12px; border: 1px solid var(--border);">${task}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // Strengths
+  const strengthsEl = document.getElementById('exec-strengths');
+  if (exec.strengths && exec.strengths.length > 0) {
+    strengthsEl.innerHTML = exec.strengths.map(s => `
+      <div style="padding: 12px; background: rgba(16,185,129,0.08); border-left: 3px solid var(--success); border-radius: 6px;">
+        <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">${s.signal}</div>
+        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">${s.description}</div>
+      </div>
+    `).join('');
+  } else {
+    strengthsEl.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">No strengths identified yet</div>';
+  }
+  
+  // Gaps
+  const gapsEl = document.getElementById('exec-gaps');
+  if (exec.gaps && exec.gaps.length > 0) {
+    gapsEl.innerHTML = exec.gaps.map(g => `
+      <div style="padding: 12px; background: rgba(245,158,11,0.08); border-left: 3px solid var(--warning); border-radius: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
+          <div style="font-size: 13px; font-weight: 700;">${g.signal}</div>
+          <span style="background: ${g.priority === 'high' ? 'rgba(239,68,68,0.1)' : g.priority === 'medium' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)'}; color: ${g.priority === 'high' ? '#ef4444' : g.priority === 'medium' ? '#f59e0b' : '#3b82f6'}; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;">${g.priority}</span>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">${g.description}</div>
+      </div>
+    `).join('');
+  } else {
+    gapsEl.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">No gaps identified</div>';
+  }
+  
+  // Recommendations
+  const recsEl = document.getElementById('exec-recommendations');
+  if (exec.recommendations && exec.recommendations.length > 0) {
+    recsEl.innerHTML = exec.recommendations.map((rec, idx) => `
+      <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px;">
+        <div style="display: flex; gap: 12px; align-items: start;">
+          <div style="background: ${rec.priority === 'critical' ? 'rgba(239,68,68,0.1)' : rec.priority === 'high' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)'}; color: ${rec.priority === 'critical' ? '#ef4444' : rec.priority === 'high' ? '#f59e0b' : '#3b82f6'}; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">${idx + 1}</div>
+          <div style="flex: 1;">
+            <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">${rec.title}</div>
+            <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px;">${rec.description}</div>
+            <div style="background: var(--panel); padding: 10px 12px; border-radius: 6px; border-left: 3px solid var(--primary); font-size: 13px; margin-bottom: 8px;">
+              <strong style="color: var(--primary);">Action:</strong> ${rec.action}
+            </div>
+            <div style="font-size: 12px; color: var(--success); font-weight: 600;">💡 Impact: ${rec.impact}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // Risks
+  const risksEl = document.getElementById('exec-risks');
+  if (exec.risks && exec.risks.length > 0) {
+    risksEl.innerHTML = exec.risks.map(risk => `
+      <div style="background: var(--bg); border-left: 4px solid ${risk.level === 'critical' ? '#ef4444' : risk.level === 'high' ? '#f59e0b' : '#3b82f6'}; border-radius: 8px; padding: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+          <div style="font-size: 14px; font-weight: 700;">${risk.category}</div>
+          <span style="background: ${risk.level === 'critical' ? 'rgba(239,68,68,0.1)' : risk.level === 'high' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)'}; color: ${risk.level === 'critical' ? '#ef4444' : risk.level === 'high' ? '#f59e0b' : '#3b82f6'}; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;">${risk.level}</span>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px;">${risk.description}</div>
+        <div style="background: var(--panel); padding: 10px 12px; border-radius: 6px; font-size: 12px; line-height: 1.5;">
+          <strong style="color: var(--primary);">Mitigation:</strong> ${risk.mitigation}
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // Quick Wins
+  const quickWinsEl = document.getElementById('exec-quick-wins');
+  if (exec.quick_wins && exec.quick_wins.length > 0) {
+    quickWinsEl.innerHTML = exec.quick_wins.map((win, idx) => `
+      <div style="background: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(59,130,246,0.05) 100%); border: 1px solid var(--border); border-radius: 10px; padding: 16px;">
+        <div style="display: flex; gap: 12px; align-items: start;">
+          <div style="background: var(--success); color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">⚡</div>
+          <div style="flex: 1;">
+            <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">${win.title}</div>
+            <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px;">${win.description}</div>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <span style="background: var(--panel); padding: 4px 10px; border-radius: 6px; font-size: 12px; border: 1px solid var(--border);">⏱️ ${win.effort}</span>
+              <span style="background: rgba(16,185,129,0.1); color: var(--success); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">📈 ${win.impact}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // Intangible Benefits
+  const benefitsEl = document.getElementById('exec-intangible-benefits');
+  if (roi.intangible_benefits && roi.intangible_benefits.length > 0) {
+    benefitsEl.innerHTML = roi.intangible_benefits.map(benefit => `
+      <div style="padding: 10px 12px; background: var(--bg); border-left: 3px solid var(--success); border-radius: 6px; font-size: 13px; line-height: 1.5;">
+        ✓ ${benefit}
+      </div>
+    `).join('');
+  }
+}
+
+function renderRecommendations(signals, stack, projectType) {
+  // Build recommendations dynamically based on what the repo actually needs
+  const recs = [];
+  const stackStr = stack.join(' ').toLowerCase();
+  
+  // Missing: tests
+  if (!signals.tests) {
+    recs.push({ icon: '🧪', title: 'Add Test Suite', desc: `No tests detected. Add ${stackStr.includes('python') ? 'pytest' : stackStr.includes('javascript') ? 'Jest/Mocha' : 'unit tests'} to catch bugs before deployment.` });
+  }
+  
+  // Missing: CI/CD
+  if (!signals.ci) {
+    recs.push({ icon: '⚙️', title: 'Setup CI/CD Pipeline', desc: 'No CI/CD workflow found. Use the generated GitHub Actions pipeline to automate build, test, and deploy on every push.' });
+  }
+  
+  // Missing: Docker
+  if (!signals.docker) {
+    recs.push({ icon: '🐳', title: 'Containerize with Docker', desc: 'No Docker configuration found. Use the generated Dockerfile for consistent builds across dev, staging, and production.' });
+  }
+  
+  // Missing: env template
+  if (!signals.env_template) {
+    recs.push({ icon: '🔐', title: 'Create .env.template', desc: 'No environment template found. Document all required env variables so new developers can set up quickly.' });
+  }
+  
+  // Missing: monitoring
+  if (!signals.monitoring) {
+    recs.push({ icon: '📊', title: 'Add Monitoring Stack', desc: 'No monitoring detected. Use the generated ELK/Prometheus config to track errors, latency, and system health.' });
+  }
+  
+  // Missing: security
+  if (!signals.security) {
+    recs.push({ icon: '🛡️', title: 'Add Security Scanning', desc: `Add ${stackStr.includes('docker') ? 'Trivy for container scanning and ' : ''}Snyk or Dependabot for dependency vulnerability checks in your CI pipeline.` });
+  }
+  
+  // Missing: secrets management
+  if (!signals.secrets) {
+    recs.push({ icon: '🔑', title: 'Secrets Management', desc: 'No secrets manager detected. Use AWS Secrets Manager, HashiCorp Vault, or GitHub Encrypted Secrets instead of .env files in production.' });
+  }
+  
+  // Missing: infra as code
+  if (!signals.infra) {
+    recs.push({ icon: '🏗️', title: 'Infrastructure as Code', desc: 'No IaC detected. Use the generated Terraform and K8s manifests to version-control your infrastructure alongside your code.' });
+  }
+  
+  // Missing: health checks
+  if (!signals.health) {
+    recs.push({ icon: '💓', title: 'Add Health Endpoint', desc: `Add a /health endpoint that returns JSON status. ${stackStr.includes('fastapi') ? 'FastAPI makes this trivial with a simple route.' : stackStr.includes('express') ? 'Express: app.get("/health", ...)' : 'Essential for K8s liveness/readiness probes.'}` });
+  }
+  
+  // Stack-specific recommendations (always show some even if everything passes)
+  if (stackStr.includes('react') || stackStr.includes('next') || stackStr.includes('vue')) {
+    recs.push({ icon: '⚡', title: 'CDN & Edge Caching', desc: 'Frontend app detected. Deploy static assets via CloudFront CDN or Vercel Edge to reduce latency by 60-80% globally.' });
+  }
+  if (stackStr.includes('python') || stackStr.includes('fastapi') || stackStr.includes('django')) {
+    recs.push({ icon: '🐍', title: 'Python Production Server', desc: 'Use Gunicorn with Uvicorn workers behind Nginx for production. The generated Dockerfile already configures this.' });
+  }
+  if (stackStr.includes('express') || stackStr.includes('node') || stackStr.includes('javascript')) {
+    recs.push({ icon: '📦', title: 'Node.js Best Practices', desc: 'Use PM2 or cluster mode for production. Enable compression middleware and implement rate limiting on API endpoints.' });
+  }
+  
+  // If repo is very well-configured, give optimization recommendations
+  if (signals.tests && signals.ci && signals.docker) {
+    recs.push({ icon: '🚀', title: 'Blue-Green Deployments', desc: 'Your repo has good CI/CD foundations. Consider blue-green or canary deployments for zero-downtime releases.' });
+  }
+  
+  // Take top 6
+  const topRecs = recs.slice(0, 6);
+  
+  const recsEl = document.getElementById('ai-recs');
+  if (!recsEl || topRecs.length === 0) return;
+  
+  recsEl.innerHTML = topRecs.map(r => `
+    <div class="rec-item">
+      <div class="rec-icon">${r.icon}</div>
+      <div class="rec-title">${r.title}</div>
+      <div class="rec-desc">${r.desc}</div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('repoUrl').addEventListener('keydown', e => {
+  if(e.key === 'Enter') analyze();
+});
+
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if(e.key === 'Enter') askRepo();
+});
+
+async function askRepo() {
+  const inputEl = document.getElementById('chat-input');
+  const question = inputEl.value.trim();
+  const repoUrl = document.getElementById('repoUrl').value.trim();
+  if (!question || !repoUrl) return;
+  
+  const historyEl = document.getElementById('chat-history');
+  
+  // Remove placeholder if present
+  if (historyEl.innerHTML.includes('Ask anything')) {
+    historyEl.innerHTML = '';
+  }
+  
+  // Append user message
+  historyEl.innerHTML += `
+    <div style="margin-bottom: 12px;">
+      <div style="font-size: 12px; font-weight: bold; color: var(--text-muted); margin-bottom: 4px;">You:</div>
+      <div style="font-size: 14px; line-height: 1.5;">${question}</div>
+    </div>
+  `;
+  
+  inputEl.value = '';
+  historyEl.scrollTop = historyEl.scrollHeight;
+  
+  // Add loading indicator
+  const loadingId = 'loading-' + Date.now();
+  historyEl.innerHTML += `
+    <div id="${loadingId}" style="margin-bottom: 16px;">
+      <div style="font-size: 12px; font-weight: bold; color: var(--primary); margin-bottom: 4px;">ShipSage:</div>
+      <div style="font-size: 14px; color: var(--text-muted);">Thinking...</div>
+    </div>
+  `;
+  historyEl.scrollTop = historyEl.scrollHeight;
+  
+  try {
+    const aiProvider = document.getElementById('aiProvider').value;
+    const watsonxApiKey = document.getElementById('apiKey')?.value || '';
+    const watsonxProjectId = document.getElementById('projectId')?.value || '';
+    const openaiApiKey = document.getElementById('openaiKey')?.value || '';
+    
+    const resp = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        repo_url: repoUrl,
+        question: question,
+        ai_provider: aiProvider,
+        watsonx_api_key: watsonxApiKey,
+        watsonx_project_id: watsonxProjectId,
+        openai_api_key: openaiApiKey,
+      })
+    });
+    
+    document.getElementById(loadingId).remove();
+    
+    if (resp.ok) {
+      const data = await resp.json();
+      historyEl.innerHTML += `
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 12px; font-weight: bold; color: var(--primary); margin-bottom: 4px;">ShipSage:</div>
+          <div style="font-size: 14px; line-height: 1.5; padding-left: 10px; border-left: 2px solid var(--primary);">${data.answer.replace(/\\n/g, '<br>')}</div>
+        </div>
+      `;
+    } else {
+      historyEl.innerHTML += `
+        <div style="margin-bottom: 16px; color: var(--error);">Failed to get answer. Make sure a valid repo is analyzed.</div>
+      `;
+    }
+  } catch (e) {
+    document.getElementById(loadingId)?.remove();
+    historyEl.innerHTML += `
+      <div style="margin-bottom: 16px; color: var(--error);">Network error.</div>
+    `;
+  }
+  
+  historyEl.scrollTop = historyEl.scrollHeight;
+}
+
+// Render history on page load
+window.addEventListener('load', () => renderProjectHistory());
+
+function renderModuleBreakdown(breakdown) {
+  const card = document.getElementById('module-breakdown-card');
+  const container = document.getElementById('module-breakdown-content');
+  if (!card || !container || !breakdown || !breakdown.modules || breakdown.modules.length === 0) return;
+
+  card.style.display = 'block';
+
+  const modules = breakdown.modules;
+  const relationships = breakdown.relationships || [];
+
+  let html = '<ol style="margin: 0; padding-left: 20px; display: grid; gap: 20px;">';
+
+  modules.forEach((mod, idx) => {
+    const icon = mod.type === 'directory' ? '📁' : '📄';
+    html += `
+      <li style="padding-left: 4px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <span style="font-size: 15px; font-weight: 700; color: var(--text);">${icon} <code style="background: var(--panel); padding: 2px 8px; border-radius: 4px; font-size: 13px; color: var(--primary);">${mod.name}${mod.type === 'directory' ? '/' : ''}</code></span>
+        </div>
+        <div style="margin-left: 4px;">
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0 0 8px 0;">${mod.description}</p>
+    `;
+
+    if (mod.bullets && mod.bullets.length > 0) {
+      html += '<ul style="margin: 0; padding-left: 20px; display: grid; gap: 4px;">';
+      mod.bullets.forEach(b => {
+        html += `<li style="font-size: 13px; color: var(--text-muted); line-height: 1.5; list-style-type: disc;">${b}</li>`;
+      });
+      html += '</ul>';
+    }
+
+    if (mod.files && mod.files.length > 0) {
+      html += '<div style="margin-top: 10px; display: grid; gap: 8px;">';
+      mod.files.forEach(f => {
+        html += `
+          <div style="padding: 10px 14px; background: rgba(0,0,0,0.15); border-left: 3px solid var(--primary); border-radius: 6px;">
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text);">
+              <code style="background: var(--panel); padding: 1px 6px; border-radius: 3px; font-size: 12px; color: var(--primary);">${f.file}</code>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">${f.description}</div>
+        `;
+        if (f.bullets && f.bullets.length > 0) {
+          html += '<ul style="margin: 6px 0 0 16px; padding: 0; display: grid; gap: 3px;">';
+          f.bullets.forEach(b => {
+            html += `<li style="font-size: 12px; color: var(--text-muted); list-style-type: square;">${b}</li>`;
+          });
+          html += '</ul>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div></li>';
+  });
+
+  html += '</ol>';
+
+  // Relationships section
+  if (relationships.length > 0) {
+    html += `
+      <div style="margin-top: 24px; padding: 16px; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px;">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--text);">🔗 Module Relationships</div>
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted);">The relationships among these modules are collaborative:</div>
+        <ul style="margin: 0; padding-left: 20px; display: grid; gap: 6px;">
+          ${relationships.map(r => `<li style="font-size: 13px; color: var(--text-muted); line-height: 1.6; list-style-type: disc;">${r}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+</script>
+</body>
+</html>
+
+
+
